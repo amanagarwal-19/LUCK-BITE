@@ -9,6 +9,7 @@ import { Badge } from '@/components/Badge';
 import Modal from '@/components/Modal';
 import Logo from '@/components/Logo';
 import MyReservations from '@/components/MyReservations';
+import { availabilityText } from '@/lib/utils';
 
 type CustomerTab = 'marketplace' | 'reservations';
 
@@ -122,7 +123,7 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
                 </div>
               </div>
               <div>
-                <label className="label-field">Maximum Discounted Price (£)</label>
+                <label className="label-field">Maximum Discounted Price (₹)</label>
                 <input
                   type="number"
                   min="0"
@@ -225,6 +226,14 @@ function ListingCard({ listing, onClick }: { listing: Listing; onClick: () => vo
       onClick={onClick}
       className="card p-5 text-left hover:shadow-card-hover hover:border-orange-200 transition-all group"
     >
+            {listing.photo_url && (
+        <img
+          src={listing.photo_url}
+          alt={listing.meal_name}
+          loading="lazy"
+          className="w-full h-40 object-cover rounded-xl mb-4"
+        />
+      )}
       <div className="flex items-start justify-between gap-3 mb-3">
         <Badge variant="orange">{listing.category}</Badge>
         {soldOut ? (
@@ -252,7 +261,7 @@ function ListingCard({ listing, onClick }: { listing: Listing; onClick: () => vo
         </div>
         <div className="flex items-center gap-2">
           <Clock size={15} className="text-ink-400 flex-shrink-0" />
-          <span>{listing.collection_window}</span>
+                    <span>{availabilityText(listing)}</span>
         </div>
       </div>
 
@@ -260,10 +269,10 @@ function ListingCard({ listing, onClick }: { listing: Listing; onClick: () => vo
         <div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-orange-500">
-              £{listing.discounted_price.toFixed(2)}
+              ₹{listing.discounted_price.toFixed(2)}
             </span>
             <span className="text-sm text-ink-400 line-through">
-              £{listing.original_price.toFixed(2)}
+              ₹{listing.original_price.toFixed(2)}
             </span>
           </div>
           <p className="text-xs text-ink-500 mt-0.5">
@@ -370,6 +379,13 @@ function ListingDetailModal({
     <Modal open={!!listing} onClose={handleClose} size="md">
       {step === 'detail' && (
         <div>
+                    {listing.photo_url && (
+            <img
+              src={listing.photo_url}
+              alt={listing.meal_name}
+              className="w-full h-52 object-cover rounded-xl mb-4"
+            />
+          )}
           <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex gap-2 flex-wrap">
               <Badge variant="orange">{listing.category}</Badge>
@@ -387,7 +403,7 @@ function ListingDetailModal({
 
           <div className="grid grid-cols-2 gap-3 mb-5">
             <InfoRow icon={<MapPin size={16} />} label="Location" value={listing.business?.location ?? '—'} />
-            <InfoRow icon={<Clock size={16} />} label="Collection" value={listing.collection_window} />
+                        <InfoRow icon={<Clock size={16} />} label="Pickup" value={availabilityText(listing)} />
             <InfoRow icon={<Store size={16} />} label="Business type" value={listing.business?.business_type ?? '—'} />
             <InfoRow icon={<Package size={16} />} label="Available" value={`${listing.quantity_available} box(es)`} />
           </div>
@@ -403,10 +419,10 @@ function ListingDetailModal({
             <div>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-orange-500">
-                  £{listing.discounted_price.toFixed(2)}
+                  ₹{listing.discounted_price.toFixed(2)}
                 </span>
                 <span className="text-base text-ink-400 line-through">
-                  £{listing.original_price.toFixed(2)}
+                  ₹{listing.original_price.toFixed(2)}
                 </span>
               </div>
               <p className="text-xs text-ink-500 mt-0.5">per box</p>
@@ -435,7 +451,7 @@ function ListingDetailModal({
 
           <h2 className="text-xl font-bold text-ink-900 mb-1">Reserve your box</h2>
           <p className="text-sm text-ink-600 mb-5">
-            {listing.meal_name} — £{listing.discounted_price.toFixed(2)} per box
+            {listing.meal_name} — ₹{listing.discounted_price.toFixed(2)} per box
           </p>
 
           <div className="space-y-4">
@@ -490,12 +506,12 @@ function ListingDetailModal({
 
           <div className="mt-6 rounded-xl bg-cream-200/60 p-4">
             <div className="flex items-center justify-between text-sm mb-1">
-              <span className="text-ink-600">{quantity} × £{listing.discounted_price.toFixed(2)}</span>
-              <span className="font-semibold text-ink-900">£{total}</span>
+              <span className="text-ink-600">{quantity} × ₹{listing.discounted_price.toFixed(2)}</span>
+              <span className="font-semibold text-ink-900">₹{total}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-ink-400">Original: {quantity} × £{listing.original_price.toFixed(2)}</span>
-              <span className="text-green-600 font-medium">You save £{((listing.original_price - listing.discounted_price) * quantity).toFixed(2)}</span>
+              <span className="text-ink-400">Original: {quantity} × ₹{listing.original_price.toFixed(2)}</span>
+              <span className="text-green-600 font-medium">You save ₹{((listing.original_price - listing.discounted_price) * quantity).toFixed(2)}</span>
             </div>
           </div>
 
@@ -528,8 +544,8 @@ function ListingDetailModal({
               <ConfirmRow label="Meal" value={listing.meal_name} />
               <ConfirmRow label="Business" value={listing.business?.name ?? '—'} />
               <ConfirmRow label="Quantity" value={`${quantity} box(es)`} />
-              <ConfirmRow label="Total" value={`£${total}`} />
-              <ConfirmRow label="Collection" value={listing.collection_window} />
+              <ConfirmRow label="Total" value={`₹${total}`} />
+                            <ConfirmRow label="Pickup" value={availabilityText(listing)} />
               <ConfirmRow label="Location" value={listing.business?.location ?? '—'} />
             </div>
           </div>

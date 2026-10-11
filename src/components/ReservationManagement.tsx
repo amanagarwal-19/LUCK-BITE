@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import type { Reservation } from '@/types';
 import { Badge } from '@/components/Badge';
 import Modal from '@/components/Modal';
+import { availabilityText } from '@/lib/utils';
 
 const STATUS_CONFIG = {
   pending: { label: 'Pending', variant: 'warning' as const, icon: Clock },
@@ -151,7 +152,7 @@ export default function ReservationManagement({
                     </p>
                     <div className="text-sm text-ink-500 mt-1 space-y-0.5">
                       <p>{r.customer_name} · {r.customer_phone}</p>
-                      <p>Qty: {r.quantity} · Collection: {r.listing?.collection_window ?? '—'}</p>
+                      Pickup: {r.listing ? availabilityText(r.listing) : '—'}
                     </div>
                   </div>
 
