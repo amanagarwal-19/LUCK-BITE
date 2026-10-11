@@ -18,7 +18,9 @@ export interface Listing {
   quantity_available: number;
   original_price: number;
   discounted_price: number;
-  collection_window: string;
+    collection_window: string | null;
+  available_until: string | null;
+  photo_url: string | null;
   allergen_info: string;
   is_active: boolean;
   created_at: string;

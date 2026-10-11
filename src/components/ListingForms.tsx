@@ -1,10 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, Package, Clock, Tag, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, Package, Clock, Tag, AlertTriangle, ImagePlus, X  } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { MEAL_CATEGORIES } from '@/types';
 import type { Listing } from '@/types';
 import { Badge } from '@/components/Badge';
 import Modal from '@/components/Modal';
+import { availabilityText } from '@/lib/utils';
+
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const MINUTES = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
+const MAX_PHOTO_MB = 5;
 
 export function ListingFormModal({
   open,
@@ -26,9 +31,14 @@ export function ListingFormModal({
     quantity_available: '1',
     original_price: '',
     discounted_price: '',
-    collection_window: '',
+        available_hour: '',
+    available_minute: '',
     allergen_info: '',
   });
+    const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,9 +51,11 @@ export function ListingFormModal({
         quantity_available: String(editing.quantity_available),
         original_price: String(editing.original_price),
         discounted_price: String(editing.discounted_price),
-        collection_window: editing.collection_window,
+               available_hour: editing.available_until ? editing.available_until.split(':')[0] : '',
+        available_minute: editing.available_until ? editing.available_until.split(':')[1] : '',
         allergen_info: editing.allergen_info,
       });
+            setExistingPhotoUrl(editing.photo_url);
     } else {
       setForm({
         meal_name: '',
@@ -52,18 +64,49 @@ export function ListingFormModal({
         quantity_available: '1',
         original_price: '',
         discounted_price: '',
-        collection_window: '',
+               available_hour: '',
+        available_minute: '',
         allergen_info: '',
       });
+            setExistingPhotoUrl(null);
     }
+        setPhotoFile(null);
+    setPhotoPreview(null);
     setError(null);
   }, [editing, open]);
 
   const update = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Please choose a JPG, PNG or WebP image.');
+      return;
+    }
+    if (file.size > MAX_PHOTO_MB * 1024 * 1024) {
+      setError(`Photo is too large. Please choose an image under ${MAX_PHOTO_MB} MB.`);
+      return;
+    }
+    setError(null);
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setExistingPhotoUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSave = async () => {
-    if (!form.meal_name.trim() || !form.description.trim() || !form.collection_window.trim()) {
-      setError('Please fill in meal name, description, and collection window.');
+    if (!form.meal_name.trim() || !form.description.trim()) {
+      setError('Please fill in meal name and description.');
+      return;
+    }
+    if (!form.available_hour || !form.available_minute) {
+      setError('Please choose the "Available till" time.');
       return;
     }
     const orig = parseFloat(form.original_price);
@@ -85,6 +128,21 @@ export function ListingFormModal({
 
     setSaving(true);
     setError(null);
+    
+    let photoUrl: string | null = existingPhotoUrl;
+    if (photoFile) {
+      const ext = photoFile.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const path = `${businessId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('meal-photos')
+        .upload(path, photoFile, { contentType: photoFile.type });
+      if (uploadError) {
+        setError('Could not upload the photo. Please try again, or save without a photo.');
+        setSaving(false);
+        return;
+      }
+      photoUrl = supabase.storage.from('meal-photos').getPublicUrl(path).data.publicUrl;
+    }
 
     const payload = {
       business_id: businessId,
@@ -94,7 +152,8 @@ export function ListingFormModal({
       quantity_available: qty,
       original_price: orig,
       discounted_price: disc,
-      collection_window: form.collection_window.trim(),
+            available_until: `${form.available_hour}:${form.available_minute}`,
+      photo_url: photoUrl,
       allergen_info: form.allergen_info.trim(),
     };
 
@@ -167,7 +226,7 @@ export function ListingFormModal({
             />
           </div>
           <div>
-            <label className="label-field">Original Price (£) *</label>
+            <label className="label-field">Original Price (₹) *</label>
             <input
               type="number"
               min="0"
@@ -179,7 +238,7 @@ export function ListingFormModal({
             />
           </div>
           <div>
-            <label className="label-field">Discounted Price (£) *</label>
+            <label className="label-field">Discounted Price (₹) *</label>
             <input
               type="number"
               min="0"
@@ -192,14 +251,71 @@ export function ListingFormModal({
           </div>
         </div>
 
+                <div>
+          <label className="label-field">Available till (24-hour time) *</label>
+          <div className="flex items-center gap-2">
+            <select
+              value={form.available_hour}
+              onChange={(e) => update('available_hour', e.target.value)}
+              className="input-field"
+              aria-label="Hour"
+            >
+              <option value="">Hour</option>
+              {HOURS.map((h) => (
+                <option key={h} value={h}>{h}</option>
+              ))}
+            </select>
+            <span className="font-bold text-ink-600">:</span>
+            <select
+              value={form.available_minute}
+              onChange={(e) => update('available_minute', e.target.value)}
+              className="input-field"
+              aria-label="Minute"
+            >
+              <option value="">Min</option>
+              {MINUTES.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+          <p className="text-xs text-ink-400 mt-1">Customers can collect until this time. Example: 18:30</p>
+        </div>
+
         <div>
-          <label className="label-field">Collection Window *</label>
+          <label className="label-field">Meal Photo (optional)</label>
+          {photoPreview || existingPhotoUrl ? (
+            <div className="relative w-full sm:w-64">
+              <img
+                src={photoPreview ?? existingPhotoUrl ?? ''}
+                alt="Meal preview"
+                className="w-full h-40 object-cover rounded-xl border border-ink-900/10"
+              />
+              <button
+                type="button"
+                onClick={removePhoto}
+                className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 shadow-card hover:bg-white"
+                aria-label="Remove photo"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full rounded-xl border-2 border-dashed border-ink-900/15 py-6 flex flex-col items-center gap-1 text-ink-500 hover:border-orange-300 hover:text-orange-600 transition-colors"
+            >
+              <ImagePlus size={24} />
+              <span className="text-sm font-medium">Click to add a photo</span>
+              <span className="text-xs text-ink-400">JPG, PNG or WebP, up to 5 MB</span>
+            </button>
+          )}
           <input
-            type="text"
-            value={form.collection_window}
-            onChange={(e) => update('collection_window', e.target.value)}
-            placeholder="Today 4:00 PM – 6:00 PM"
-            className="input-field"
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handlePhotoChange}
+            className="hidden"
           />
         </div>
 
@@ -251,6 +367,14 @@ export function ListingCard({
 
   return (
     <div className={`card p-5 ${!listing.is_active ? 'opacity-60' : ''}`}>
+            {listing.photo_url && (
+        <img
+          src={listing.photo_url}
+          alt={listing.meal_name}
+          loading="lazy"
+          className="w-full h-40 object-cover rounded-xl mb-4"
+        />
+      )}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex gap-2 flex-wrap">
           <Badge variant="orange">{listing.category}</Badge>
@@ -268,10 +392,10 @@ export function ListingCard({
           <Package size={15} className="text-ink-400" /> {listing.quantity_available} box(es) available
         </div>
         <div className="flex items-center gap-2">
-          <Tag size={15} className="text-ink-400" /> £{listing.discounted_price.toFixed(2)} (was £{listing.original_price.toFixed(2)})
+          <Tag size={15} className="text-ink-400" /> ₹{listing.discounted_price.toFixed(2)} (was ₹{listing.original_price.toFixed(2)})
         </div>
         <div className="flex items-center gap-2">
-          <Clock size={15} className="text-ink-400" /> {listing.collection_window}
+         {availabilityText(listing)}
         </div>
         {listing.allergen_info && (
           <div className="flex items-start gap-2">

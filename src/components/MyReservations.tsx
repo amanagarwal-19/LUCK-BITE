@@ -2,6 +2,7 @@ import { useCustomerReservations } from '@/hooks/useData';
 import { getSessionId } from '@/lib/session';
 import { Badge } from '@/components/Badge';
 import { Package, Clock, CheckCircle2, XCircle, MapPin, Store, Calendar } from 'lucide-react';
+import { availabilityText } from '@/lib/utils';
 
 const STATUS_CONFIG = {
   pending: { label: 'Pending', variant: 'warning' as const, icon: Clock },
@@ -69,11 +70,11 @@ export default function MyReservations() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock size={15} className="text-ink-400" />
-                    {r.listing?.collection_window ?? '—'}
+                  {r.listing ? availabilityText(r.listing) : '—'}
                   </div>
                   <div className="flex items-center gap-2">
                     <Package size={15} className="text-ink-400" />
-                    {r.quantity} box(es) · £{total}
+                    {r.quantity} box(es) · ₹{total}
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin size={15} className="text-ink-400" />
