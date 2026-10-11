@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { MapPin, Clock, Tag, Search, SlidersHorizontal, Package, ArrowLeft, CheckCircle2, ShoppingBag, Store, ClipboardList } from 'lucide-react';
+import { MapPin, Clock, Tag, Search, SlidersHorizontal, Package, ArrowLeft, CheckCircle2, ShoppingBag, Store, ClipboardList, User as UserIcon } from 'lucide-react';
 import { useListings, generatePickupCode } from '@/hooks/useData';
 import { supabase } from '@/lib/supabase';
 import { getSessionId } from '@/lib/session';
@@ -9,9 +9,12 @@ import { Badge } from '@/components/Badge';
 import Modal from '@/components/Modal';
 import Logo from '@/components/Logo';
 import MyReservations from '@/components/MyReservations';
+import AuthModal from '@/components/AuthModal';
+import AccountPage from '@/components/AccountPage';
+import { useAuth } from '@/lib/AuthContext';
 import { availabilityText } from '@/lib/utils';
 
-type CustomerTab = 'marketplace' | 'reservations';
+type CustomerTab = 'marketplace' | 'reservations' | 'account';
 
 export default function CustomerMarketplace({ onBack }: { onBack: () => void }) {
   const { listings, loading, error, refetch: refetchListings } = useListings();
@@ -22,6 +25,8 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
   const [showFilters, setShowFilters] = useState(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [reservationCount, setReservationCount] = useState(0);
+    const { user } = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return listings.filter((l) => {
@@ -57,7 +62,21 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
             <ArrowLeft size={18} /> <span className="hidden sm:inline">Home</span>
           </button>
           <Logo size="sm" />
-          <span className="ml-auto badge bg-orange-100 text-orange-700">Customer</span>
+                    <div className="ml-auto flex items-center gap-2">
+            <span className="hidden sm:inline badge bg-orange-100 text-orange-700">Customer</span>
+            {user ? (
+              <button onClick={() => setTab('account')} className="btn-ghost">
+                <UserIcon size={18} />
+                <span className="max-w-[8rem] truncate">
+                  {(user.user_metadata?.full_name as string | undefined)?.split(' ')[0] ?? 'Account'}
+                </span>
+              </button>
+            ) : (
+              <button onClick={() => setAuthOpen(true)} className="btn-primary !px-4 !py-2">
+                Sign in
+              </button>
+            )}
+          </div>
         </div>
         {/* Tabs */}
         <div className="max-w-6xl mx-auto px-5 sm:px-8 flex gap-1 border-t border-ink-900/5">
@@ -70,9 +89,14 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
               <span className="ml-1.5 badge bg-orange-500 text-white px-1.5 py-0.5 text-[10px]">{reservationCount}</span>
             )}
           </TabButton>
+                    <TabButton active={tab === 'account'} onClick={() => setTab('account')} icon={<UserIcon size={16} />}>
+            My Account
+          </TabButton>
         </div>
       </header>
 
+         {tab === 'marketplace' && (
+         <>
       {/* Search + Filters */}
       <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-6 pb-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-1">Marketplace</h1>
@@ -183,7 +207,10 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
           </div>
         )}
       </div>
-
+         
+           </>
+         )}
+    
       {/* Detail + Reservation modal */}
       <ListingDetailModal
         listing={selectedListing}
@@ -195,6 +222,12 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
           <MyReservations />
         </div>
       )}
+            {tab === 'account' && (
+        <div className="max-w-4xl mx-auto px-5 sm:px-8 py-6">
+          <AccountPage onSignInClick={() => setAuthOpen(true)} />
+        </div>
+      )}
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
 }
