@@ -37,12 +37,12 @@ export default function ReservationManagement({
 
   const handleMarkCollected = async (reservation: Reservation) => {
     setActionError(null);
-    const { error } = await supabase
-      .from('reservations')
-      .update({ status: 'collected' })
-      .eq('id', reservation.id);
+    const { error } = await supabase.rpc('set_reservation_status', {
+      p_reservation_id: reservation.id,
+      p_status: 'collected',
+    });
     if (error) {
-      setActionError('Could not update reservation status.');
+      setActionError(error.message || 'Could not update reservation status.');
       return;
     }
     onRefresh();
@@ -50,21 +50,14 @@ export default function ReservationManagement({
 
   const handleCancel = async (reservation: Reservation) => {
     setActionError(null);
-    const { error: rErr } = await supabase
-      .from('reservations')
-      .update({ status: 'cancelled' })
-      .eq('id', reservation.id);
+    // The database also returns the reserved boxes to the listing's stock
+    const { error: rErr } = await supabase.rpc('set_reservation_status', {
+      p_reservation_id: reservation.id,
+      p_status: 'cancelled',
+    });
     if (rErr) {
-      setActionError('Could not cancel reservation.');
+      setActionError(rErr.message || 'Could not cancel reservation.');
       return;
-    }
-    // Release the reserved quantity back to the listing
-    if (reservation.listing) {
-      const restored = reservation.listing.quantity_available + reservation.quantity;
-      await supabase
-        .from('listings')
-        .update({ quantity_available: restored })
-        .eq('id', reservation.listing_id);
     }
     onRefresh();
   };
@@ -152,7 +145,7 @@ export default function ReservationManagement({
                     </p>
                     <div className="text-sm text-ink-500 mt-1 space-y-0.5">
                       <p>{r.customer_name} · {r.customer_phone}</p>
-                      Pickup: {r.listing ? availabilityText(r.listing) : '—'}
+                      <p>Qty: {r.quantity} · Pickup: {r.listing ? availabilityText(r.listing) : '—'}</p>
                     </div>
                   </div>
 

@@ -27,13 +27,21 @@ export default function BusinessDashboard({
   const openEdit = (l: Listing) => { setEditing(l); setShowForm(true); };
 
   const handleToggleActive = async (l: Listing) => {
-    await supabase.from('listings').update({ is_active: !l.is_active }).eq('id', l.id);
+    const { error } = await supabase.from('listings').update({ is_active: !l.is_active }).eq('id', l.id);
+    if (error) {
+      alert('Could not update this listing. Your business may not be verified or you may not have permission.');
+      return;
+    }
     refetchListings();
   };
 
   const handleDelete = async (l: Listing) => {
     if (!confirm(`Delete "${l.meal_name}"? This cannot be undone.`)) return;
-    await supabase.from('listings').delete().eq('id', l.id);
+    const { error } = await supabase.from('listings').delete().eq('id', l.id);
+    if (error) {
+      alert('Could not delete this listing. Your business may not be verified or you may not have permission.');
+      return;
+    }
     refetchListings();
   };
 
