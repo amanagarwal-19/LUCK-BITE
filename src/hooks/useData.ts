@@ -2,6 +2,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Business, Listing, Reservation } from '@/types';
 
+// Only these business columns are public. Contact details and verification data stay private.
+const PUBLIC_BUSINESS_COLUMNS = 'id,name,business_type,location';
+
 export function useListings() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +15,7 @@ export function useListings() {
     setError(null);
     const { data, error } = await supabase
       .from('listings')
-      .select('*, business:businesses(*)')
+      .select(`*, business:businesses(${PUBLIC_BUSINESS_COLUMNS})`)
       .eq('is_active', true)
       .order('created_at', { ascending: false });
     if (error) {
@@ -63,19 +66,22 @@ export function useBusinessListings(businessId: string | null) {
   return { listings, loading, error, refetch: fetchListings };
 }
 
-export function useBusinesses() {
+// The signed-in user's own businesses (with their verification status)
+export function useMyBusinesses(userId: string | null) {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchBusinesses = useCallback(async () => {
+    if (!userId) {
+      setBusinesses([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    const { data } = await supabase
-      .from('businesses')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data } = await supabase.rpc('my_businesses');
     setBusinesses((data ?? []) as Business[]);
     setLoading(false);
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     fetchBusinesses();
@@ -97,7 +103,7 @@ export function useBusinessReservations(businessId: string | null) {
     setLoading(true);
     const { data, error } = await supabase
       .from('reservations')
-      .select('*, listing:listings(*, business:businesses(*))')
+      .select(`*, listing:listings(*, business:businesses(${PUBLIC_BUSINESS_COLUMNS}))`)
       .in('listing_id', (
         await supabase.from('listings').select('id').eq('business_id', businessId)
       ).data?.map((l) => l.id) ?? [])
@@ -117,6 +123,7 @@ export function useBusinessReservations(businessId: string | null) {
   return { reservations, loading, refetch: fetchReservations };
 }
 
+// A customer's own reservations, found by their browser session (and their account if signed in)
 export function useCustomerReservations(sessionId: string | null) {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,11 +135,7 @@ export function useCustomerReservations(sessionId: string | null) {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
-      .from('reservations')
-      .select('*, listing:listings(*, business:businesses(*))')
-      .eq('session_id', sessionId)
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase.rpc('get_my_reservations', { p_session_id: sessionId });
     if (error) {
       setReservations([]);
     } else {

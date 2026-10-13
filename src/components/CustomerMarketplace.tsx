@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { MapPin, Clock, Tag, Search, SlidersHorizontal, Package, ArrowLeft, CheckCircle2, ShoppingBag, Store, ClipboardList, User as UserIcon } from 'lucide-react';
-import { useListings, generatePickupCode } from '@/hooks/useData';
+import { useListings } from '@/hooks/useData';
 import { supabase } from '@/lib/supabase';
 import { getSessionId } from '@/lib/session';
 import type { Listing } from '@/types';
@@ -351,7 +351,7 @@ function ListingDetailModal({
     setTimeout(reset, 200);
   };
 
-  const handleReserve = async () => {
+    const handleReserve = async () => {
     if (!listing) return;
     if (!name.trim() || !phone.trim()) {
       setSubmitError('Please enter your name and phone number.');
@@ -365,34 +365,19 @@ function ListingDetailModal({
     setSubmitting(true);
     setSubmitError(null);
 
-    const code = generatePickupCode();
+    const { data, error } = await supabase.rpc('reserve_listing', {
+      p_listing_id: listing.id,
+      p_customer_name: name.trim(),
+      p_customer_phone: phone.trim(),
+      p_quantity: quantity,
+      p_session_id: getSessionId(),
+    });
 
-    const { data, error } = await supabase
-      .from('reservations')
-      .insert({
-        listing_id: listing.id,
-        customer_name: name.trim(),
-        customer_phone: phone.trim(),
-        quantity,
-        pickup_code: code,
-        status: 'pending',
-        session_id: getSessionId(),
-      })
-      .select('id, pickup_code')
-      .single();
-
-    if (error) {
-      setSubmitError('Something went wrong creating your reservation. Please try again.');
+    if (error || !data) {
+      setSubmitError(error?.message || 'Something went wrong creating your reservation. Please try again.');
       setSubmitting(false);
       return;
     }
-
-    // Decrement available quantity
-    const newQty = Math.max(0, listing.quantity_available - quantity);
-    await supabase
-      .from('listings')
-      .update({ quantity_available: newQty })
-      .eq('id', listing.id);
 
     setReservation({ id: data.id, code: data.pickup_code });
     setStep('confirm');
