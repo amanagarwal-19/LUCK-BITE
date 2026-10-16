@@ -36,9 +36,18 @@ function friendlyError(message: string): string {
 }
 
 async function resolveUserRole(u: User): Promise<UserRole> {
-  // 1. Try secure RPC
+  // 1. FAST PATH (Instant / 0ms): Check user_metadata.role from user object in memory
+  if (u.user_metadata?.role && ['customer', 'business', 'admin'].includes(u.user_metadata.role)) {
+    return u.user_metadata.role as UserRole;
+  }
+
+  // 2. Try secure RPC with a 1200ms timeout
   try {
-    const { data, error } = await supabase.rpc('get_user_account_role');
+    const rpcPromise = supabase.rpc('get_user_account_role');
+    const timeoutPromise = new Promise<{ data: null; error: Error }>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 1200)
+    );
+    const { data, error } = await Promise.race([rpcPromise, timeoutPromise]);
     if (!error && data && ['customer', 'business', 'admin'].includes(data)) {
       return data as UserRole;
     }
@@ -46,34 +55,18 @@ async function resolveUserRole(u: User): Promise<UserRole> {
     // fallback
   }
 
-  // 2. Try user_profiles table directly
+  // 3. Try user_profiles table with a 1000ms timeout
   try {
-    const { data: profile } = await supabase.from('user_profiles').select('role').eq('id', u.id).maybeSingle();
+    const queryPromise = supabase.from('user_profiles').select('role').eq('id', u.id).maybeSingle();
+    const timeoutPromise = new Promise<{ data: null; error: Error }>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 1000)
+    );
+    const { data: profile } = await Promise.race([queryPromise, timeoutPromise]);
     if (profile?.role && ['customer', 'business', 'admin'].includes(profile.role)) {
       return profile.role as UserRole;
     }
   } catch {
     // fallback
-  }
-
-  // 3. Fallback to user_metadata
-  if (u.user_metadata?.role && ['customer', 'business', 'admin'].includes(u.user_metadata.role)) {
-    return u.user_metadata.role as UserRole;
-  }
-
-  // 4. Check if user is an admin or business owner
-  try {
-    const { data: isAdmin } = await supabase.rpc('is_admin');
-    if (isAdmin) return 'admin';
-  } catch {
-    // ignore
-  }
-
-  try {
-    const { count } = await supabase.from('businesses').select('id', { count: 'exact', head: true }).eq('owner_id', u.id);
-    if (count && count > 0) return 'business';
-  } catch {
-    // ignore
   }
 
   return 'customer';
@@ -88,8 +81,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const syncUserAndRole = useCallback(async (newUser: User | null) => {
     setUser(newUser);
     if (newUser) {
-      const detectedRole = await resolveUserRole(newUser);
-      setRole(detectedRole);
+      try {
+        const detectedRole = await resolveUserRole(newUser);
+        setRole(detectedRole);
+      } catch {
+        setRole('customer');
+      }
     } else {
       setRole(null);
     }
@@ -106,20 +103,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    // Restore the saved session when the page loads/refreshes
-    supabase.auth.getSession().then(async ({ data }) => {
-      await syncUserAndRole(data.session?.user ?? null);
-      setLoading(false);
-    });
+    let active = true;
+
+    // Fail-safe: Under no circumstances should the app be stuck on loading for more than 1.2 seconds
+    const safetyTimer = setTimeout(() => {
+      if (active) {
+        setLoading(false);
+      }
+    }, 1200);
+
+    const init = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (active) {
+          await syncUserAndRole(data.session?.user ?? null);
+        }
+      } catch (err) {
+        console.warn('Session init warning:', err);
+      } finally {
+        if (active) {
+          setLoading(false);
+          clearTimeout(safetyTimer);
+        }
+      }
+    };
+
+    init();
 
     // Keep in sync with sign in / sign out / token refresh / password-reset link
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      await syncUserAndRole(session?.user ?? null);
-      setLoading(false);
+      if (!active) return;
+      try {
+        await syncUserAndRole(session?.user ?? null);
+      } catch (err) {
+        console.warn('Auth state change warning:', err);
+      } finally {
+        if (active) setLoading(false);
+      }
       if (event === 'PASSWORD_RECOVERY') setRecovering(true);
     });
 
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      active = false;
+      clearTimeout(safetyTimer);
+      listener.subscription.unsubscribe();
+    };
   }, [syncUserAndRole]);
 
   const signUp = useCallback(async (

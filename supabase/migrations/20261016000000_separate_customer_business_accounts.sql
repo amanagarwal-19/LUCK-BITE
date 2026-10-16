@@ -54,7 +54,7 @@ CREATE POLICY "profiles_update_own" ON public.user_profiles
   WITH CHECK (id = auth.uid() AND role = (SELECT p.role FROM public.user_profiles p WHERE p.id = auth.uid()));
 
 REVOKE ALL ON public.user_profiles FROM anon, authenticated;
-GRANT SELECT ON public.user_profiles TO authenticated;
+GRANT SELECT ON public.user_profiles TO anon, authenticated;
 
 -- 2. Backfill existing users
 INSERT INTO public.user_profiles (id, email, role, full_name)
@@ -353,6 +353,6 @@ REVOKE ALL ON FUNCTION public.get_user_account_role() FROM PUBLIC, anon, authent
 REVOKE ALL ON FUNCTION public.check_account_registration(text, text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.validate_login_role(text) FROM PUBLIC, anon, authenticated;
 
-GRANT EXECUTE ON FUNCTION public.get_user_account_role() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_user_account_role() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.check_account_registration(text, text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.validate_login_role(text) TO authenticated;
