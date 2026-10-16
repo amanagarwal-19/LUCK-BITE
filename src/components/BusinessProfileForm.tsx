@@ -3,6 +3,8 @@ import { Store, ArrowLeft, Building2, User, Mail, Phone, MapPin, Tag, FileCheck,
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/AuthContext';
 import { BUSINESS_TYPES } from '@/types';
+import LocationPicker from '@/components/LocationPicker';
+import type { PickedLocation } from '@/components/LocationPicker';
 import Logo from '@/components/Logo';
 
 const MAX_DOC_MB = 5;
@@ -21,7 +23,7 @@ export default function BusinessProfileForm({
     (user?.user_metadata?.full_name as string | undefined) ?? ''
   );
   const [businessType, setBusinessType] = useState<string>(BUSINESS_TYPES[0]);
-  const [location, setLocation] = useState('');
+  const [picked, setPicked] = useState<PickedLocation | null>(null);
   const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState('');
   const [licence, setLicence] = useState('');
@@ -56,8 +58,16 @@ export default function BusinessProfileForm({
       setError('Only Business accounts can register a business.');
       return;
     }
-    if (!name.trim() || !contactName.trim() || !location.trim()) {
-      setError('Please fill in business name, contact name and location.');
+    if (!name.trim() || !contactName.trim()) {
+      setError('Please fill in business name and contact name.');
+      return;
+    }
+    if (!picked) {
+      setError('Please search for your business on the map, or tap the map to place the pin on it.');
+      return;
+    }
+    if (picked.address.trim().length < 3) {
+      setError('Please add your business address under the map.');
       return;
     }
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
@@ -90,7 +100,10 @@ export default function BusinessProfileForm({
       p_name: name.trim(),
       p_contact_name: contactName.trim(),
       p_business_type: businessType,
-      p_location: location.trim(),
+      p_location: picked.address,
+      p_latitude: picked.lat,
+      p_longitude: picked.lng,
+      p_place_id: picked.placeId,
       p_email: email.trim(),
       p_phone: phone.trim(),
       p_licence_number: licence.trim() || null,
@@ -177,14 +190,13 @@ export default function BusinessProfileForm({
             </select>
           </Field>
 
-          <Field icon={<MapPin size={18} />} label="Location" required>
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="12 Main Road, Dhanbad"
-              className="input-field"
-              required
+          <Field icon={<MapPin size={18} />} label="Business Location" required>
+            <LocationPicker
+              value={picked}
+              onChange={(v) => {
+                setPicked(v);
+                if (!name.trim() && v.name) setName(v.name);
+              }}
             />
           </Field>
 

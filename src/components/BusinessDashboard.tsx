@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import Modal from '@/components/Modal';
+import LocationPicker from '@/components/LocationPicker';
+import type { PickedLocation } from '@/components/LocationPicker';
 import { ArrowLeft, Plus, Package, ClipboardList, Store, MapPin, Mail, Phone, Clock, Tag, LogOut } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useBusinessListings, useBusinessReservations } from '@/hooks/useData';
@@ -14,10 +17,13 @@ type Tab = 'listings' | 'reservations';
 export default function BusinessDashboard({
   business,
   onBack,
+  onBusinessUpdated,
 }: {
   business: Business;
   onBack: () => void;
+  onBusinessUpdated?: () => void;
 }) {
+  const [editLocation, setEditLocation] = useState(false);
   const { signOut } = useAuth();
   const [tab, setTab] = useState<Tab>('listings');
   const [showForm, setShowForm] = useState(false);
@@ -84,12 +90,28 @@ export default function BusinessDashboard({
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-500 mt-1">
                 <span className="flex items-center gap-1.5"><Tag size={14} /> {business.business_type}</span>
                 <span className="flex items-center gap-1.5"><MapPin size={14} /> {business.location}</span>
+                <button onClick={() => setEditLocation(true)} className="text-orange-600 font-semibold hover:underline">
+                  {business.latitude != null ? 'Edit map location' : 'Add map location'}
+                </button>
                 {business.email && <span className="flex items-center gap-1.5"><Mail size={14} /> {business.email}</span>}
                 {business.phone && <span className="flex items-center gap-1.5"><Phone size={14} /> {business.phone}</span>}
               </div>
             </div>
           </div>
         </div>
+
+        {business.latitude == null && (
+          <div className="rounded-xl bg-warning-100 border border-warning-500/20 p-3 mb-4 text-sm text-warning-700">
+            Customers nearby can't find your listings yet. Click "Add map location" above to set your exact location.
+          </div>
+        )}
+
+        <EditLocationModal
+          business={business}
+          open={editLocation}
+          onClose={() => setEditLocation(false)}
+          onSaved={() => { setEditLocation(false); onBusinessUpdated?.(); }}
+        />
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
@@ -208,5 +230,80 @@ function TabButton({
       {icon}
       {children}
     </button>
+  );
+}
+
+function EditLocationModal({
+  business,
+  open,
+  onClose,
+  onSaved,
+}: {
+  business: Business;
+  open: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const startingPoint = (): PickedLocation | null =>
+    business.latitude != null && business.longitude != null
+      ? { lat: business.latitude, lng: business.longitude, address: business.location, placeId: business.place_id ?? null }
+      : null;
+  const [picked, setPicked] = useState<PickedLocation | null>(startingPoint);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Start from the saved location every time the window is opened
+  useEffect(() => {
+    if (open) {
+      setPicked(startingPoint());
+      setError(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const handleSave = async () => {
+    if (!picked) {
+      setError('Please search for your business or tap the map to place the pin first.');
+      return;
+    }
+    if (picked.address.trim().length < 3) {
+      setError('Please add your business address under the map.');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    const { error: rpcError } = await supabase.rpc('update_business_location', {
+      p_business_id: business.id,
+      p_location: picked.address,
+      p_latitude: picked.lat,
+      p_longitude: picked.lng,
+      p_place_id: picked.placeId,
+    });
+    setSaving(false);
+    if (rpcError) {
+      setError(rpcError.message || 'Could not save the location. Please try again.');
+      return;
+    }
+    onSaved();
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Business location" size="lg">
+      <div className="space-y-4">
+        <p className="text-sm text-ink-600">
+          Search for your restaurant or café, pick it from the list, and confirm the pin. You can also tap the map to
+          place it yourself. Customers nearby will find your listings using this location.
+        </p>
+        <LocationPicker value={picked} onChange={setPicked} />
+        {error && (
+          <div className="rounded-xl bg-error-100 border border-error-500/20 p-3">
+            <p className="text-sm text-error-700">{error}</p>
+          </div>
+        )}
+        <button onClick={handleSave} disabled={saving} className="btn-primary w-full">
+          {saving ? 'Saving…' : 'Save location'}
+        </button>
+      </div>
+    </Modal>
   );
 }

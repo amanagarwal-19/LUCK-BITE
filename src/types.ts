@@ -6,6 +6,8 @@ export interface PublicBusiness {
   name: string;
   business_type: string;
   location: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 // Full business record (only returned to its owner and to administrators)
@@ -16,6 +18,7 @@ export interface Business extends PublicBusiness {
   email?: string | null;
   phone?: string | null;
   licence_number?: string | null;
+  place_id?: string | null;
   evidence_path?: string | null;
   review_note?: string | null;
   reviewed_at?: string | null;
@@ -37,6 +40,9 @@ export interface Listing {
   is_active: boolean;
   created_at: string;
   business?: PublicBusiness;
+  // Only present in "near me" results
+  distance_km?: number;
+  minutes_left?: number | null;
 }
 
 export interface Reservation {

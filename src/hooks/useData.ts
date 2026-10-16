@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import type { Business, Listing, Reservation } from '@/types';
 
 // Only these business columns are public. Contact details and verification data stay private.
-const PUBLIC_BUSINESS_COLUMNS = 'id,name,business_type,location';
+const PUBLIC_BUSINESS_COLUMNS = 'id,name,business_type,location,latitude,longitude';
 
 export function useListings() {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -58,6 +58,48 @@ export function useBusinessListings(businessId: string | null) {
     }
     setLoading(false);
   }, [businessId]);
+
+  useEffect(() => {
+    fetchListings();
+  }, [fetchListings]);
+
+  return { listings, loading, error, refetch: fetchListings };
+}
+
+// Meal boxes near the customer (sorted by distance, or by collection time)
+export function useNearbyListings(
+  coords: { lat: number; lng: number } | null,
+  radiusKm: number,
+  sortBy: 'distance' | 'time'
+) {
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const lat = coords?.lat ?? null;
+  const lng = coords?.lng ?? null;
+
+  const fetchListings = useCallback(async () => {
+    if (lat === null || lng === null) {
+      setListings([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase.rpc('nearby_listings', {
+      p_lat: lat,
+      p_lng: lng,
+      p_radius_km: radiusKm,
+      p_sort: sortBy,
+    });
+    if (error) {
+      setError(error.message);
+      setListings([]);
+    } else {
+      setListings((data ?? []) as Listing[]);
+    }
+    setLoading(false);
+  }, [lat, lng, radiusKm, sortBy]);
 
   useEffect(() => {
     fetchListings();

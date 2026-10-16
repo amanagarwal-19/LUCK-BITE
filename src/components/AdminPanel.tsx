@@ -229,6 +229,23 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
                       <Row label="Contact" value={b.contact_name} />
                       <Row label="Business email" value={b.email} />
                       <Row label="Phone" value={b.phone} />
+                      <div className="flex gap-2">
+                        <dt className="text-ink-500 shrink-0">Map pin:</dt>
+                        <dd>
+                          {b.latitude != null && b.longitude != null ? (
+                            <a
+                              href={`https://www.openstreetmap.org/?mlat=${b.latitude}&mlon=${b.longitude}#map=18/${b.latitude}/${b.longitude}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-orange-600 hover:underline"
+                            >
+                              View on map
+                            </a>
+                          ) : (
+                            '—'
+                          )}
+                        </dd>
+                      </div>
                       <Row label="FSSAI number" value={b.licence_number} />
                       <Row label="Submitted" value={new Date(b.created_at).toLocaleString()} />
                       {b.review_note && <Row label="Review note" value={b.review_note} />}
