@@ -3,7 +3,7 @@ import { LogOut, KeyRound, MailCheck } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function AccountPage({ onSignInClick }: { onSignInClick: () => void }) {
-  const { user, loading, signOut, sendPasswordReset } = useAuth();
+  const { user, role, loading, signOut, sendPasswordReset } = useAuth();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -17,9 +17,9 @@ export default function AccountPage({ onSignInClick }: { onSignInClick: () => vo
       <div className="card p-8 text-center max-w-md mx-auto">
         <h2 className="text-xl font-bold text-ink-900 mb-2">Sign in to your account</h2>
         <p className="text-ink-600 text-sm mb-5">
-          Create an account or sign in to manage your profile.
+          Sign in or create an account to view and manage your profile.
         </p>
-        <button onClick={onSignInClick} className="btn-primary">Sign in or create account</button>
+        <button onClick={onSignInClick} className="btn-primary">Sign in as Customer</button>
       </div>
     );
   }
@@ -45,14 +45,28 @@ export default function AccountPage({ onSignInClick }: { onSignInClick: () => vo
   return (
     <div className="card p-6 sm:p-8 max-w-xl">
       <div className="flex items-center gap-4 mb-6">
-        <div className="w-14 h-14 rounded-full bg-orange-500 text-white flex items-center justify-center text-2xl font-bold">
+        <div className={`w-14 h-14 rounded-full ${role === 'business' ? 'bg-ink-900' : 'bg-orange-500'} text-white flex items-center justify-center text-2xl font-bold`}>
           {initial}
         </div>
         <div className="min-w-0">
-          <h2 className="text-xl font-bold text-ink-900 truncate">{fullName || 'Your account'}</h2>
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-xl font-bold text-ink-900 truncate">{fullName || 'Your account'}</h2>
+            <span className={`badge text-xs ${role === 'business' ? 'bg-ink-900 text-white' : 'bg-orange-100 text-orange-700'}`}>
+              {role === 'business' ? 'Business Account' : role === 'admin' ? 'Admin' : 'Customer Account'}
+            </span>
+          </div>
           <p className="text-ink-600 text-sm truncate">{email}</p>
         </div>
       </div>
+
+      {role === 'business' && (
+        <div className="mb-6 rounded-xl bg-orange-50 border border-orange-200 p-4 text-sm text-ink-700">
+          <p className="font-medium text-orange-800 mb-1">Business Account</p>
+          <p className="text-xs text-ink-600">
+            This account is registered for business operations. You can manage your restaurant, surplus food listings, and pickup verifications in the Business Portal.
+          </p>
+        </div>
+      )}
 
       <div className="space-y-3">
         <button onClick={handleReset} disabled={busy} className="btn-secondary w-full sm:w-auto">

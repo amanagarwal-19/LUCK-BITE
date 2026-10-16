@@ -112,9 +112,14 @@ export default function LandingPage({
       <footer className="border-t border-ink-900/5 py-8">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Logo size="sm" />
-          <p className="text-sm text-ink-500">
-            Demo prototype for Eureka Junior — no real payments or SMS verification.
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-ink-500">
+              Demo prototype for Eureka Junior — no real payments or SMS verification.
+            </p>
+            <a href="#admin" className="text-xs text-ink-400 hover:text-ink-700 hover:underline transition-colors">
+              Admin Portal
+            </a>
+          </div>
         </div>
       </footer>
     </div>

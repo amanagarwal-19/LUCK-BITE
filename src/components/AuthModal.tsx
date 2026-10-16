@@ -19,10 +19,12 @@ export default function AuthModal({
   open,
   onClose,
   initialMode = 'signin',
+  role = 'customer',
 }: {
   open: boolean;
   onClose: () => void;
   initialMode?: 'signin' | 'signup';
+  role?: 'customer' | 'business';
 }) {
   const { signIn, signUp, sendPasswordReset, updatePassword, recovering, finishRecovery } = useAuth();
   const [mode, setMode] = useState<Mode>(initialMode);
@@ -42,7 +44,7 @@ export default function AuthModal({
     }
   }, [open, initialMode]);
 
-  // When the customer arrives from a password-reset email link, show the "new password" form
+  // When the user arrives from a password-reset email link, show the "new password" form
   const activeMode: Mode = recovering && mode !== 'recoveryDone' ? 'recovery' : mode;
   const isOpen = open || recovering || mode === 'recoveryDone';
 
@@ -59,6 +61,16 @@ export default function AuthModal({
 
   const validEmail = (v: string) => /^\S+@\S+\.\S+$/.test(v.trim());
 
+  const getTitle = () => {
+    if (activeMode === 'signin') {
+      return role === 'business' ? 'Business sign in' : 'Customer sign in';
+    }
+    if (activeMode === 'signup') {
+      return role === 'business' ? 'Create a business account' : 'Create your customer account';
+    }
+    return TITLES[activeMode];
+  };
+
   const handleSubmit = async () => {
     setError(null);
 
@@ -72,10 +84,10 @@ export default function AuthModal({
     setBusy(true);
     try {
       if (activeMode === 'signin') {
-        await signIn(email.trim(), password);
+        await signIn(email.trim(), password, role);
         handleClose();
       } else if (activeMode === 'signup') {
-        const { needsVerification } = await signUp(fullName.trim(), email.trim(), password);
+        const { needsVerification } = await signUp(fullName.trim(), email.trim(), password, role);
         if (needsVerification) goTo('verify');
         else handleClose();
       } else if (activeMode === 'forgot') {
@@ -143,7 +155,16 @@ export default function AuthModal({
   );
 
   return (
-    <Modal open={isOpen} onClose={handleClose} title={TITLES[activeMode]} size="sm">
+    <Modal open={isOpen} onClose={handleClose} title={getTitle()} size="sm">
+      <div className="mb-4 flex items-center justify-between pb-1 border-b border-ink-900/5">
+        <span className={`badge ${role === 'business' ? 'bg-ink-900 text-white' : 'bg-orange-100 text-orange-700'}`}>
+          {role === 'business' ? 'Business Portal' : 'Customer Account'}
+        </span>
+        <span className="text-xs text-ink-500">
+          {role === 'business' ? 'For restaurants & stores' : 'For food rescue & pickups'}
+        </span>
+      </div>
+
       {activeMode === 'signin' && (
         <div className="space-y-4">
           {emailField}
@@ -155,12 +176,12 @@ export default function AuthModal({
           </div>
           {errorBox}
           <button onClick={handleSubmit} disabled={busy} className="btn-primary w-full">
-            {busy ? 'Signing in…' : 'Sign in'}
+            {busy ? 'Signing in…' : `Sign in as ${role === 'business' ? 'Business' : 'Customer'}`}
           </button>
           <p className="text-sm text-center text-ink-600">
             New here?{' '}
             <button onClick={() => goTo('signup')} className="font-semibold text-orange-600 hover:underline">
-              Create an account
+              {role === 'business' ? 'Create a business account' : 'Create a customer account'}
             </button>
           </p>
         </div>
@@ -169,14 +190,14 @@ export default function AuthModal({
       {activeMode === 'signup' && (
         <div className="space-y-4">
           <div>
-            <label className="label-field">Full name</label>
+            <label className="label-field">{role === 'business' ? 'Contact person name' : 'Full name'}</label>
             <input
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               onKeyDown={onEnter}
               autoComplete="name"
-              placeholder="Your full name"
+              placeholder={role === 'business' ? 'e.g. John Doe (Manager)' : 'Your full name'}
               className="input-field"
             />
           </div>
@@ -184,7 +205,7 @@ export default function AuthModal({
           {passwordField('Password', 'new-password')}
           {errorBox}
           <button onClick={handleSubmit} disabled={busy} className="btn-primary w-full">
-            {busy ? 'Creating account…' : 'Create account'}
+            {busy ? 'Creating account…' : `Create ${role === 'business' ? 'Business' : 'Customer'} Account`}
           </button>
           <p className="text-sm text-center text-ink-600">
             Already have an account?{' '}

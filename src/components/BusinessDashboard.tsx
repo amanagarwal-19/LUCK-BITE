@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ArrowLeft, Plus, Package, ClipboardList, Store, MapPin, Mail, Phone, Clock, Tag } from 'lucide-react';
+import { ArrowLeft, Plus, Package, ClipboardList, Store, MapPin, Mail, Phone, Clock, Tag, LogOut } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useBusinessListings, useBusinessReservations } from '@/hooks/useData';
+import { useAuth } from '@/lib/AuthContext';
 import type { Business, Listing } from '@/types';
 import { Badge } from '@/components/Badge';
 import Logo from '@/components/Logo';
@@ -17,6 +18,7 @@ export default function BusinessDashboard({
   business: Business;
   onBack: () => void;
 }) {
+  const { signOut } = useAuth();
   const [tab, setTab] = useState<Tab>('listings');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Listing | null>(null);
@@ -54,10 +56,19 @@ export default function BusinessDashboard({
       <header className="sticky top-0 z-30 bg-cream-50/90 backdrop-blur border-b border-ink-900/5">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 py-3.5 flex items-center gap-4">
           <button onClick={onBack} className="btn-ghost -ml-2">
-            <ArrowLeft size={18} /> <span className="hidden sm:inline">Home</span>
+            <ArrowLeft size={18} /> <span className="hidden sm:inline">My Businesses</span>
           </button>
           <Logo size="sm" />
-          <span className="ml-auto badge bg-ink-900/5 text-ink-600">Business</span>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="badge bg-ink-900 text-white">Business</span>
+            <button
+              onClick={() => signOut()}
+              className="btn-ghost text-ink-500 hover:text-ink-900"
+              title="Sign out"
+            >
+              <LogOut size={16} /> <span className="hidden sm:inline">Sign out</span>
+            </button>
+          </div>
         </div>
       </header>
 

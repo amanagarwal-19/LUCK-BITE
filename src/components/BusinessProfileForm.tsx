@@ -15,7 +15,7 @@ export default function BusinessProfileForm({
   onSubmitted: () => void;
   onBack: () => void;
 }) {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const [name, setName] = useState('');
   const [contactName, setContactName] = useState(
     (user?.user_metadata?.full_name as string | undefined) ?? ''
@@ -50,6 +50,10 @@ export default function BusinessProfileForm({
     e.preventDefault();
     if (!user) {
       setError('Please sign in first.');
+      return;
+    }
+    if (role === 'customer') {
+      setError('Only Business accounts can register a business.');
       return;
     }
     if (!name.trim() || !contactName.trim() || !location.trim()) {

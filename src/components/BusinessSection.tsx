@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Store, ChevronRight, Plus, LogOut, ShieldCheck, Clock, XCircle, Ban } from 'lucide-react';
+import { ArrowLeft, Store, ChevronRight, Plus, LogOut, ShieldCheck, Clock, XCircle, Ban, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { useMyBusinesses } from '@/hooks/useData';
 import type { Business, BusinessStatus } from '@/types';
@@ -27,15 +27,18 @@ const STATUS_INFO = {
 } as const;
 
 function PortalHeader({ onBack, right }: { onBack: () => void; right?: React.ReactNode }) {
+  const { user } = useAuth();
   return (
     <header className="sticky top-0 z-30 bg-cream-50/90 backdrop-blur border-b border-ink-900/5">
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-3.5 flex items-center gap-4">
-        <button onClick={onBack} className="btn-ghost -ml-2">
-          <ArrowLeft size={18} /> <span className="hidden sm:inline">Home</span>
-        </button>
+        {!user && (
+          <button onClick={onBack} className="btn-ghost -ml-2">
+            <ArrowLeft size={18} /> <span className="hidden sm:inline">Home</span>
+          </button>
+        )}
         <Logo size="sm" />
         <div className="ml-auto flex items-center gap-2">
-          <span className="badge bg-ink-900/5 text-ink-600">Business</span>
+          <span className="badge bg-ink-900 text-white">Business</span>
           {right}
         </div>
       </div>
@@ -43,9 +46,11 @@ function PortalHeader({ onBack, right }: { onBack: () => void; right?: React.Rea
   );
 }
 
+
 export default function BusinessSection({ onBack }: { onBack: () => void }) {
-  const { user, loading: authLoading, signOut } = useAuth();
-  const { businesses, loading, refetch } = useMyBusinesses(user?.id ?? null);
+  const { user, role, loading: authLoading, signOut } = useAuth();
+  const isBusinessOrAdmin = role === 'business' || role === 'admin';
+  const { businesses, loading, refetch } = useMyBusinesses(user && isBusinessOrAdmin ? user.id : null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
@@ -84,7 +89,7 @@ export default function BusinessSection({ onBack }: { onBack: () => void }) {
               onClick={() => { setAuthMode('signin'); setAuthOpen(true); }}
               className="btn-primary w-full"
             >
-              Sign in
+              Sign in as Business
             </button>
             <button
               onClick={() => { setAuthMode('signup'); setAuthOpen(true); }}
@@ -94,7 +99,42 @@ export default function BusinessSection({ onBack }: { onBack: () => void }) {
             </button>
           </div>
         </div>
-        <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} initialMode={authMode} />
+        <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} initialMode={authMode} role="business" />
+      </div>
+    );
+  }
+
+  // 3. Logged in, but is a Customer account: strictly block access to business dashboard
+  if (user && role === 'customer') {
+    return (
+      <div className="min-h-screen bg-cream-100">
+        <PortalHeader onBack={onBack} />
+        <div className="max-w-md mx-auto px-5 sm:px-8 py-16 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-4 shadow-card">
+            <AlertTriangle size={28} />
+          </div>
+          <h1 className="text-2xl font-bold text-ink-900 mb-2">Customer Account Detected</h1>
+          <p className="text-ink-600 text-sm mb-6">
+            You are signed in as <strong>{user.email}</strong>, which is registered as a Customer account.
+            Business dashboards and surplus food management are only accessible to Business accounts.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={async () => {
+                await signOut();
+                setAuthMode('signin');
+                setAuthOpen(true);
+              }}
+              className="btn-primary w-full"
+            >
+              Sign out & sign in with Business account
+            </button>
+            <button onClick={onBack} className="btn-secondary w-full">
+              Back to Customer Marketplace
+            </button>
+          </div>
+        </div>
+        <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} initialMode={authMode} role="business" />
       </div>
     );
   }

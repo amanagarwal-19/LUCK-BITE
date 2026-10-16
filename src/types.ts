@@ -71,3 +71,13 @@ export const BUSINESS_TYPES = [
 ] as const;
 
 export type ReservationStatus = Reservation['status'];
+
+export type UserRole = 'customer' | 'business' | 'admin';
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  full_name: string | null;
+  created_at: string;
+}

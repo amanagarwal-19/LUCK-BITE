@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import LandingPage from '@/components/LandingPage';
 import CustomerMarketplace from '@/components/CustomerMarketplace';
 import BusinessSection from '@/components/BusinessSection';
@@ -8,15 +8,16 @@ import { useAuth } from '@/lib/AuthContext';
 type View = 'landing' | 'customer' | 'business' | 'admin';
 
 export default function App() {
-  // The admin area is opened with the web address ending in #admin
+  const { user, role, loading, recovering } = useAuth();
   const [view, setView] = useState<View>(window.location.hash === '#admin' ? 'admin' : 'landing');
-  const { recovering } = useAuth();
+  const prevUserRef = useRef(user);
 
   // Customer clicked a password-reset link in their email: take them to the customer area
   useEffect(() => {
     if (recovering) setView('customer');
   }, [recovering]);
 
+  // Admin area hash listener
   useEffect(() => {
     const onHash = () => {
       if (window.location.hash === '#admin') setView('admin');
@@ -25,10 +26,55 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
+  // When user logs out -> immediately redirect to the landing homepage
+  useEffect(() => {
+    if (prevUserRef.current && !user) {
+      if (window.location.hash) history.replaceState(null, '', window.location.pathname);
+      setView('landing');
+    }
+    prevUserRef.current = user;
+  }, [user]);
+
+  // STRICT PORTAL LOCKOUT:
+  // - If signed in as Business: locked to 'business' view. Cannot access homepage or customer portal.
+  // - If signed in as Customer: locked to 'customer' view. Cannot access homepage or business portal.
+  // - Leaving or switching is only possible after explicitly logging out.
+  useEffect(() => {
+    if (loading) return;
+    if (window.location.hash === '#admin') return;
+
+    if (user) {
+      if (role === 'business') {
+        if (view !== 'business') {
+          setView('business');
+        }
+      } else if (role === 'customer') {
+        if (view !== 'customer') {
+          setView('customer');
+        }
+      }
+    }
+  }, [user, role, loading, view]);
+
   const goHome = () => {
     if (window.location.hash) history.replaceState(null, '', window.location.pathname);
-    setView('landing');
+    // Logged-in users are locked into their respective portal until they sign out
+    if (user && role === 'business') {
+      setView('business');
+    } else if (user && role === 'customer') {
+      setView('customer');
+    } else {
+      setView('landing');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-cream-100 flex items-center justify-center">
+        <div className="inline-block w-8 h-8 border-3 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cream-100">
@@ -38,9 +84,10 @@ export default function App() {
           onSelectBusiness={() => setView('business')}
         />
       )}
-      {view === 'customer' && <CustomerMarketplace onBack={() => setView('landing')} />}
-      {view === 'business' && <BusinessSection onBack={() => setView('landing')} />}
+      {view === 'customer' && <CustomerMarketplace onBack={goHome} />}
+      {view === 'business' && <BusinessSection onBack={goHome} />}
       {view === 'admin' && <AdminPanel onBack={goHome} />}
     </div>
   );
 }
+
