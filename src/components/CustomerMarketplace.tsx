@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
-import { MapPin, Clock, Tag, Search, SlidersHorizontal, Package, ArrowLeft, CheckCircle2, ShoppingBag, Store, ClipboardList, User as UserIcon, LogOut } from 'lucide-react';
-import { useListings } from '@/hooks/useData';
+import { MapPin, Clock, Tag, Search, SlidersHorizontal, Package, ArrowLeft, CheckCircle2, ShoppingBag, Store, ClipboardList, User as UserIcon, LogOut, Navigation } from 'lucide-react';
+import { useListings, useNearbyListings } from '@/hooks/useData';
 import { supabase } from '@/lib/supabase';
 import { getSessionId } from '@/lib/session';
 import type { Listing } from '@/types';
@@ -13,11 +13,16 @@ import AuthModal from '@/components/AuthModal';
 import AccountPage from '@/components/AccountPage';
 import { useAuth } from '@/lib/AuthContext';
 import { availabilityText } from '@/lib/utils';
+import NearbyPanel from '@/components/NearbyPanel';
+import { useNearbySettings, formatDistance, formatTimeLeft, mapUrl } from '@/lib/nearby';
 
 type CustomerTab = 'marketplace' | 'reservations' | 'account';
 
 export default function CustomerMarketplace({ onBack }: { onBack: () => void }) {
-  const { listings, loading, error, refetch: refetchListings } = useListings();
+  const nearby = useNearbySettings();
+  const allListings = useListings();
+  const nearbyListings = useNearbyListings(nearby.active ? nearby.coords : null, nearby.radiusKm, nearby.sortBy);
+  const { listings, loading, error, refetch: refetchListings } = nearby.active ? nearbyListings : allListings;
   const [tab, setTab] = useState<CustomerTab>('marketplace');
   const [category, setCategory] = useState<string>('all');
   const [maxPrice, setMaxPrice] = useState<string>('');
@@ -117,6 +122,8 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
           Browse surplus meal boxes from local businesses and reserve yours for pickup.
         </p>
 
+        <NearbyPanel nearby={nearby} />
+
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
@@ -203,8 +210,14 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
         {!loading && !error && filtered.length === 0 && (
           <div className="text-center py-20">
             <Package size={40} className="mx-auto text-ink-400 mb-3" />
-            <p className="text-ink-600 font-medium">No meal boxes match your filters.</p>
-            <p className="text-ink-400 text-sm mt-1">Try adjusting your search or clearing filters.</p>
+            <p className="text-ink-600 font-medium">
+              {nearby.active ? `No meal boxes within ${nearby.radiusKm} km right now.` : 'No meal boxes match your filters.'}
+            </p>
+            <p className="text-ink-400 text-sm mt-1">
+              {nearby.active
+                ? 'Try a larger search radius, or show all listings.'
+                : 'Try adjusting your search or clearing filters.'}
+            </p>
           </div>
         )}
 
@@ -305,9 +318,18 @@ function ListingCard({ listing, onClick }: { listing: Listing; onClick: () => vo
           <MapPin size={15} className="text-ink-400 flex-shrink-0" />
           <span className="truncate">{listing.business?.location ?? '—'}</span>
         </div>
+        {listing.distance_km != null && (
+          <div className="flex items-center gap-2">
+            <Navigation size={15} className="text-orange-500 flex-shrink-0" />
+            <span className="font-semibold text-orange-600">{formatDistance(listing.distance_km)} away</span>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <Clock size={15} className="text-ink-400 flex-shrink-0" />
-                    <span>{availabilityText(listing)}</span>
+          <span>
+            {availabilityText(listing)}
+            {formatTimeLeft(listing.minutes_left) ? ` · ${formatTimeLeft(listing.minutes_left)}` : ''}
+          </span>
         </div>
       </div>
 
@@ -438,6 +460,16 @@ function ListingDetailModal({
             <InfoRow icon={<Store size={16} />} label="Business type" value={listing.business?.business_type ?? '—'} />
             <InfoRow icon={<Package size={16} />} label="Available" value={`${listing.quantity_available} box(es)`} />
           </div>
+          {listing.business?.latitude != null && listing.business?.longitude != null && (
+            <a
+              href={mapUrl(listing.business.latitude!, listing.business.longitude!)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-600 hover:underline mb-5 -mt-2"
+            >
+              <Navigation size={15} /> View on map
+            </a>
+          )}
 
           {listing.allergen_info && (
             <div className="rounded-xl bg-warning-100/60 border border-warning-500/20 p-4 mb-5">

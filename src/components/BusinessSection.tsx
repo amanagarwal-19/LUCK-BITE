@@ -141,7 +141,13 @@ export default function BusinessSection({ onBack }: { onBack: () => void }) {
 
   // 3. Verified business selected: dashboard
   if (selected && selected.status === 'approved') {
-    return <BusinessDashboard business={selected} onBack={() => { setSelectedId(null); refetch(); }} />;
+    return (
+      <BusinessDashboard
+        business={selected}
+        onBack={() => { setSelectedId(null); refetch(); }}
+        onBusinessUpdated={refetch}
+      />
+    );
   }
 
   // 4. Registering a new business
