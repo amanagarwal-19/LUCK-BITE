@@ -130,7 +130,7 @@ export default function BusinessSection({ onBack }: { onBack: () => void }) {
               Sign out & sign in with Business account
             </button>
             <button onClick={onBack} className="btn-secondary w-full">
-              Back to Customer Marketplace
+              Back to Discover Food
             </button>
           </div>
         </div>

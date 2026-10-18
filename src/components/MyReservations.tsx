@@ -1,5 +1,5 @@
 import { useCustomerReservations } from '@/hooks/useData';
-import { getSessionId } from '@/lib/session';
+import { useAuth } from '@/lib/AuthContext';
 import { Badge } from '@/components/Badge';
 import { Package, Clock, CheckCircle2, XCircle, MapPin, Store, Calendar } from 'lucide-react';
 import { availabilityText } from '@/lib/utils';
@@ -11,9 +11,25 @@ const STATUS_CONFIG = {
   expired: { label: 'Expired', variant: 'neutral' as const, icon: Clock },
 };
 
-export default function MyReservations() {
-  const sessionId = getSessionId();
-  const { reservations, loading, refetch } = useCustomerReservations(sessionId);
+export default function MyReservations({ onSignInClick }: { onSignInClick?: () => void }) {
+  const { user, loading: authLoading } = useAuth();
+  // Reservations belong to the signed-in account
+  const { reservations, loading, refetch } = useCustomerReservations(null, user?.id ?? null);
+
+  if (!authLoading && !user) {
+    return (
+      <div className="card p-8 text-center max-w-md mx-auto">
+        <Package size={36} className="mx-auto text-ink-400 mb-3" />
+        <h2 className="text-xl font-bold text-ink-900 mb-2">Sign in to see your reservations</h2>
+        <p className="text-ink-600 text-sm mb-5">
+          Your reserved meal boxes and pickup codes are saved to your customer account.
+        </p>
+        {onSignInClick && (
+          <button onClick={onSignInClick} className="btn-primary">Sign in as Customer</button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -31,7 +47,7 @@ export default function MyReservations() {
           <Package size={36} className="mx-auto text-ink-400 mb-3" />
           <p className="text-ink-600 font-medium">No reservations yet.</p>
           <p className="text-ink-400 text-sm mt-1">
-            Browse the marketplace and reserve a meal box to see it here.
+            Browse Discover Food and reserve a meal box to see it here.
           </p>
         </div>
       ) : (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Eye, EyeOff, MailCheck } from 'lucide-react';
 import Modal from '@/components/Modal';
 import { useAuth } from '@/lib/AuthContext';
+import { cleanPhoneInput, isValidMobile, PHONE_ERROR, dobError, latestBirthDate, GENDER_OPTIONS } from '@/lib/validation';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'verify' | 'resetSent' | 'recovery' | 'recoveryDone';
 
@@ -20,7 +21,9 @@ export default function AuthModal({
   onClose,
   initialMode = 'signin',
   role = 'customer',
+  onOpenTerms,
 }: {
+  onOpenTerms?: () => void;
   open: boolean;
   onClose: () => void;
   initialMode?: 'signin' | 'signup';
@@ -31,6 +34,9 @@ export default function AuthModal({
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [dob, setDob] = useState('');
+  const [gender, setGender] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +47,9 @@ export default function AuthModal({
       setError(null);
       setPassword('');
       setShowPassword(false);
+      setPhone('');
+      setDob('');
+      setGender('');
     }
   }, [open, initialMode]);
 
@@ -75,6 +84,11 @@ export default function AuthModal({
     setError(null);
 
     if (activeMode === 'signup' && !fullName.trim()) return setError('Please enter your full name.');
+    if (activeMode === 'signup' && role === 'customer') {
+      if (!isValidMobile(phone)) return setError(PHONE_ERROR);
+      const dError = dobError(dob);
+      if (dError) return setError(dError);
+    }
     if (activeMode !== 'recovery' && !validEmail(email)) return setError('Please enter a valid email address.');
     if ((activeMode === 'signup' || activeMode === 'recovery') && password.length < 8) {
       return setError('Password must be at least 8 characters.');
@@ -87,7 +101,13 @@ export default function AuthModal({
         await signIn(email.trim(), password, role);
         handleClose();
       } else if (activeMode === 'signup') {
-        const { needsVerification } = await signUp(fullName.trim(), email.trim(), password, role);
+        const { needsVerification } = await signUp(
+          fullName.trim(),
+          email.trim(),
+          password,
+          role,
+          role === 'customer' ? { phone, dateOfBirth: dob || undefined, gender: gender || undefined } : undefined
+        );
         if (needsVerification) goTo('verify');
         else handleClose();
       } else if (activeMode === 'forgot') {
@@ -202,7 +222,67 @@ export default function AuthModal({
             />
           </div>
           {emailField}
+          {role === 'customer' && (
+            <>
+              <div>
+                <label className="label-field">Mobile number</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-ink-600 font-medium">+91</span>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    value={phone}
+                    onChange={(e) => setPhone(cleanPhoneInput(e.target.value))}
+                    onKeyDown={onEnter}
+                    autoComplete="tel-national"
+                    placeholder="9876543210"
+                    className="input-field"
+                  />
+                </div>
+                <p className="text-xs text-ink-400 mt-1">
+                  10 digits, numbers only. Businesses use it to reach you about your pickup.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label-field">
+                    Date of birth <span className="text-ink-400 font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={dob}
+                    max={latestBirthDate()}
+                    onChange={(e) => setDob(e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+                <div>
+                  <label className="label-field">
+                    Gender <span className="text-ink-400 font-normal">(optional)</span>
+                  </label>
+                  <select value={gender} onChange={(e) => setGender(e.target.value)} className="input-field">
+                    <option value="">Select</option>
+                    {GENDER_OPTIONS.map((g) => (
+                      <option key={g.value} value={g.value}>{g.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
           {passwordField('Password', 'new-password')}
+          <p className="text-xs text-ink-500">
+            By creating an account you agree to the{' '}
+            {onOpenTerms ? (
+              <button type="button" onClick={onOpenTerms} className="font-semibold text-orange-600 hover:underline">
+                Terms & Privacy Policy
+              </button>
+            ) : (
+              'Terms & Privacy Policy'
+            )}
+            .
+          </p>
           {errorBox}
           <button onClick={handleSubmit} disabled={busy} className="btn-primary w-full">
             {busy ? 'Creating account…' : `Create ${role === 'business' ? 'Business' : 'Customer'} Account`}

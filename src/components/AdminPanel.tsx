@@ -6,10 +6,22 @@ import type { Business, BusinessStatus } from '@/types';
 import Logo from '@/components/Logo';
 import { Badge } from '@/components/Badge';
 import AuthModal from '@/components/AuthModal';
+import { SUPPORT_TOPICS } from '@/components/InfoPages';
 
 interface AdminBusiness extends Business {
   owner_email: string | null;
   similar_count: number;
+}
+
+interface SupportRequest {
+  id: string;
+  created_at: string;
+  name: string;
+  email: string;
+  topic: string;
+  message: string;
+  pickup_code: string | null;
+  status: 'open' | 'resolved';
 }
 
 interface AuditEntry {
@@ -42,7 +54,9 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
   const { user, loading: authLoading, signOut } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<'businesses' | 'audit'>('businesses');
+  const [tab, setTab] = useState<'businesses' | 'audit' | 'support'>('businesses');
+  const [support, setSupport] = useState<SupportRequest[]>([]);
+  const [supportFilter, setSupportFilter] = useState<'open' | 'resolved'>('open');
   const [filter, setFilter] = useState<BusinessStatus | 'all'>('pending');
   const [businesses, setBusinesses] = useState<AdminBusiness[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
@@ -77,11 +91,30 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
     setBusy(false);
   }, []);
 
+  const loadSupport = useCallback(async () => {
+    setBusy(true);
+    setError(null);
+    const { data, error } = await supabase.rpc('admin_list_support_requests', { p_status: supportFilter });
+    if (error) setError(error.message);
+    else setSupport((data ?? []) as SupportRequest[]);
+    setBusy(false);
+  }, [supportFilter]);
+
+  const resolveRequest = async (id: string, resolved: boolean) => {
+    const { error } = await supabase.rpc('admin_resolve_support_request', { p_id: id, p_resolved: resolved });
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    loadSupport();
+  };
+
   useEffect(() => {
     if (!isAdmin) return;
     if (tab === 'businesses') loadBusinesses();
-    else loadAudit();
-  }, [isAdmin, tab, loadBusinesses, loadAudit]);
+    else if (tab === 'audit') loadAudit();
+    else loadSupport();
+  }, [isAdmin, tab, loadBusinesses, loadAudit, loadSupport]);
 
   const setStatus = async (b: AdminBusiness, status: BusinessStatus) => {
     let note: string | null = null;
@@ -173,7 +206,7 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
         <h1 className="text-2xl font-bold text-ink-900 mb-4">Administration</h1>
 
         <div className="flex gap-1 mb-6 border-b border-ink-900/5">
-          {(['businesses', 'audit'] as const).map((t) => (
+          {(['businesses', 'audit', 'support'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -181,7 +214,7 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
                 tab === t ? 'border-orange-500 text-orange-600' : 'border-transparent text-ink-500 hover:text-ink-900'
               }`}
             >
-              {t === 'businesses' ? 'Businesses' : 'Audit log'}
+              {t === 'businesses' ? 'Businesses' : t === 'audit' ? 'Audit log' : 'Support'}
             </button>
           ))}
         </div>
@@ -319,6 +352,63 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
                         ))}
                       </ul>
                     )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'support' && (
+          <div>
+            <div className="flex gap-2 mb-5">
+              {(['open', 'resolved'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setSupportFilter(f)}
+                  className={`badge capitalize transition-all ${
+                    supportFilter === f ? 'bg-orange-500 text-white' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            {support.length === 0 ? (
+              <div className="card p-8 text-center text-ink-500 text-sm">
+                {busy ? 'Loading…' : 'No support requests in this list.'}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {support.map((s) => (
+                  <div key={s.id} className="card p-5">
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div>
+                        <p className="font-bold text-ink-900">{s.name}</p>
+                        <a href={`mailto:${s.email}`} className="text-sm text-orange-600 hover:underline">{s.email}</a>
+                      </div>
+                      <div className="text-right text-xs text-ink-500">
+                        <p>{new Date(s.created_at).toLocaleString()}</p>
+                        <p className="mt-1">
+                          <Badge variant="neutral">
+                            {SUPPORT_TOPICS.find((t) => t.value === s.topic)?.label ?? s.topic}
+                          </Badge>
+                        </p>
+                      </div>
+                    </div>
+                    {s.pickup_code && (
+                      <p className="text-sm text-ink-600 mt-2">
+                        Pickup code: <span className="font-semibold">{s.pickup_code}</span>
+                      </p>
+                    )}
+                    <p className="text-sm text-ink-800 mt-3 whitespace-pre-wrap break-words">{s.message}</p>
+                    <div className="mt-4">
+                      {s.status === 'open' ? (
+                        <button onClick={() => resolveRequest(s.id, true)} className="btn-primary">Mark resolved</button>
+                      ) : (
+                        <button onClick={() => resolveRequest(s.id, false)} className="btn-secondary">Reopen</button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

@@ -343,7 +343,7 @@ export function ListingFormModal({
           </button>
         </div>
         <p className="text-center text-xs text-ink-400">
-          Published listings appear in the customer marketplace automatically.
+          Published listings appear in Discover Food for customers automatically.
         </p>
       </div>
     </Modal>

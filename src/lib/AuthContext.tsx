@@ -8,12 +8,19 @@ export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+// Extra details a customer gives when creating an account
+export interface SignUpProfile {
+  phone?: string;
+  dateOfBirth?: string;
+  gender?: string;
+}
+
 interface AuthContextValue {
   user: User | null;
   role: UserRole | null;
   loading: boolean;
   recovering: boolean;
-  signUp: (fullName: string, email: string, password: string, role: 'customer' | 'business') => Promise<{ needsVerification: boolean }>;
+  signUp: (fullName: string, email: string, password: string, role: 'customer' | 'business', profile?: SignUpProfile) => Promise<{ needsVerification: boolean }>;
   signIn: (email: string, password: string, expectedRole?: 'customer' | 'business') => Promise<void>;
   signOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
@@ -154,7 +161,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fullName: string,
     email: string,
     password: string,
-    accountRole: 'customer' | 'business'
+    accountRole: 'customer' | 'business',
+    profile?: SignUpProfile
   ) => {
     const cleanEmail = normalizeEmail(email);
     const cleanName = fullName.trim();
@@ -182,6 +190,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: {
           full_name: cleanName,
           role: accountRole,
+          ...(accountRole === 'customer' && profile?.phone ? { phone: profile.phone } : {}),
+          ...(accountRole === 'customer' && profile?.dateOfBirth ? { date_of_birth: profile.dateOfBirth } : {}),
+          ...(accountRole === 'customer' && profile?.gender ? { gender: profile.gender } : {}),
         },
         emailRedirectTo: window.location.origin,
       },

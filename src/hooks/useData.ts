@@ -166,25 +166,25 @@ export function useBusinessReservations(businessId: string | null) {
 }
 
 // A customer's own reservations, found by their browser session (and their account if signed in)
-export function useCustomerReservations(sessionId: string | null) {
+export function useCustomerReservations(sessionId: string | null, userId: string | null = null) {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchReservations = useCallback(async () => {
-    if (!sessionId) {
+    if (!sessionId && !userId) {
       setReservations([]);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase.rpc('get_my_reservations', { p_session_id: sessionId });
+    const { data, error } = await supabase.rpc('get_my_reservations', { p_session_id: sessionId ?? '' });
     if (error) {
       setReservations([]);
     } else {
       setReservations((data ?? []) as Reservation[]);
     }
     setLoading(false);
-  }, [sessionId]);
+  }, [sessionId, userId]);
 
   useEffect(() => {
     fetchReservations();

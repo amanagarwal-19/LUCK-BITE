@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback } from 'react';
-import { MapPin, Clock, Tag, Search, SlidersHorizontal, Package, ArrowLeft, CheckCircle2, ShoppingBag, Store, ClipboardList, User as UserIcon, LogOut, Navigation } from 'lucide-react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import { MapPin, Clock, Tag, Search, SlidersHorizontal, Package, ArrowLeft, CheckCircle2, ShoppingBag, Store, ClipboardList, User as UserIcon, LogOut, Navigation, Menu, Heart, HelpCircle, Info, ShieldCheck, FileText } from 'lucide-react';
 import { useListings, useNearbyListings } from '@/hooks/useData';
 import { supabase } from '@/lib/supabase';
 import { getSessionId } from '@/lib/session';
@@ -15,8 +15,11 @@ import { useAuth } from '@/lib/AuthContext';
 import { availabilityText } from '@/lib/utils';
 import NearbyPanel from '@/components/NearbyPanel';
 import { useNearbySettings, formatDistance, formatTimeLeft, mapUrl } from '@/lib/nearby';
+import { useFavourites } from '@/hooks/useFavourites';
+import { HelpSupportPage, AboutPage, FoodSafetyPage, TermsPrivacyPage } from '@/components/InfoPages';
+import { cleanPhoneInput, isValidMobile, PHONE_ERROR } from '@/lib/validation';
 
-type CustomerTab = 'marketplace' | 'reservations' | 'account';
+type CustomerTab = 'marketplace' | 'reservations' | 'account' | 'favourites' | 'help' | 'about' | 'safety' | 'terms';
 
 export default function CustomerMarketplace({ onBack }: { onBack: () => void }) {
   const nearby = useNearbySettings();
@@ -32,6 +35,13 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
   const [reservationCount, setReservationCount] = useState(0);
   const { user, role, signOut } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
+  const favs = useFavourites(user ? user.id : null);
+  const [supportTopic, setSupportTopic] = useState('reservation');
+
+  const openPage = (t: CustomerTab) => {
+    setTab(t);
+    window.scrollTo(0, 0);
+  };
 
   const filtered = useMemo(() => {
     return listings.filter((l) => {
@@ -99,7 +109,7 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
         {/* Tabs */}
         <div className="max-w-6xl mx-auto px-5 sm:px-8 flex gap-1 border-t border-ink-900/5">
           <TabButton active={tab === 'marketplace'} onClick={() => setTab('marketplace')} icon={<Package size={16} />}>
-            Marketplace
+            Discover Food
           </TabButton>
           <TabButton active={tab === 'reservations'} onClick={() => setTab('reservations')} icon={<ClipboardList size={16} />}>
             My Reservations
@@ -110,6 +120,7 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
                     <TabButton active={tab === 'account'} onClick={() => setTab('account')} icon={<UserIcon size={16} />}>
             My Account
           </TabButton>
+          <MoreMenu active={tab} onSelect={openPage} />
         </div>
       </header>
 
@@ -117,7 +128,7 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
          <>
       {/* Search + Filters */}
       <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-6 pb-4">
-        <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-1">Marketplace</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-1">Discover Food</h1>
         <p className="text-ink-600 text-sm mb-5">
           Browse surplus meal boxes from local businesses and reserve yours for pickup.
         </p>
@@ -242,10 +253,24 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
         listing={selectedListing}
         onClose={() => setSelectedListing(null)}
         onReserved={handleReservationComplete}
+        onRequireLogin={() => {
+          setSelectedListing(null);
+          setAuthOpen(true);
+        }}
+        isFavourite={selectedListing ? favs.isFavourite(selectedListing.business_id) : false}
+        onToggleFavourite={() => {
+          if (!selectedListing) return;
+          if (!user) {
+            setSelectedListing(null);
+            setAuthOpen(true);
+            return;
+          }
+          favs.toggle(selectedListing.business_id);
+        }}
       />
       {tab === 'reservations' && (
         <div className="max-w-4xl mx-auto px-5 sm:px-8 py-6">
-          <MyReservations />
+          <MyReservations onSignInClick={() => setAuthOpen(true)} />
         </div>
       )}
             {tab === 'account' && (
@@ -253,7 +278,185 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
           <AccountPage onSignInClick={() => setAuthOpen(true)} />
         </div>
       )}
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} role="customer" />
+      {tab === 'favourites' && (
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6">
+          <FavouritesPage
+            signedIn={!!user}
+            favs={favs}
+            listings={allListings.listings}
+            onOpenListing={setSelectedListing}
+            onSignInClick={() => setAuthOpen(true)}
+          />
+        </div>
+      )}
+      {tab === 'help' && <HelpSupportPage key={supportTopic} initialTopic={supportTopic} />}
+      {tab === 'about' && <AboutPage />}
+      {tab === 'safety' && (
+        <FoodSafetyPage
+          onReportConcern={() => {
+            setSupportTopic('food_safety');
+            openPage('help');
+          }}
+        />
+      )}
+      {tab === 'terms' && <TermsPrivacyPage />}
+      <AuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        role="customer"
+        onOpenTerms={() => {
+          setAuthOpen(false);
+          openPage('terms');
+        }}
+      />
+    </div>
+  );
+}
+
+const MENU_ITEMS: { tab: CustomerTab; label: string; icon: React.ReactNode }[] = [
+  { tab: 'favourites', label: 'Favourites', icon: <Heart size={16} /> },
+  { tab: 'help', label: 'Help & Support', icon: <HelpCircle size={16} /> },
+  { tab: 'about', label: 'About Luck Bite', icon: <Info size={16} /> },
+  { tab: 'safety', label: 'Food Safety & Trust', icon: <ShieldCheck size={16} /> },
+  { tab: 'terms', label: 'Terms & Privacy', icon: <FileText size={16} /> },
+];
+
+// The menu button at the far right of the tab bar
+function MoreMenu({ active, onSelect }: { active: CustomerTab; onSelect: (t: CustomerTab) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const isMenuPage = MENU_ITEMS.some((m) => m.tab === active);
+
+  // Close when clicking outside or pressing Escape
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="ml-auto relative flex items-center">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-label="More options"
+        aria-expanded={open}
+        className={`p-2.5 rounded-xl transition-colors ${
+          isMenuPage || open ? 'bg-orange-100 text-orange-600' : 'text-ink-500 hover:bg-cream-200 hover:text-ink-900'
+        }`}
+      >
+        <Menu size={20} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-64 card p-1.5 z-40 shadow-card-hover">
+          {MENU_ITEMS.map((m) => (
+            <button
+              key={m.tab}
+              onClick={() => {
+                setOpen(false);
+                onSelect(m.tab);
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-medium transition-colors ${
+                active === m.tab ? 'bg-orange-50 text-orange-700' : 'text-ink-800 hover:bg-cream-200'
+              }`}
+            >
+              <span className="text-ink-500">{m.icon}</span>
+              {m.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FavouritesPage({
+  signedIn,
+  favs,
+  listings,
+  onOpenListing,
+  onSignInClick,
+}: {
+  signedIn: boolean;
+  favs: ReturnType<typeof useFavourites>;
+  listings: Listing[];
+  onOpenListing: (l: Listing) => void;
+  onSignInClick: () => void;
+}) {
+  if (!signedIn) {
+    return (
+      <div className="card p-8 text-center max-w-md mx-auto">
+        <Heart size={36} className="mx-auto text-ink-400 mb-3" />
+        <h2 className="text-xl font-bold text-ink-900 mb-2">Sign in to see your favourites</h2>
+        <p className="text-ink-600 text-sm mb-5">
+          Save businesses you like and quickly find their new meal boxes here.
+        </p>
+        <button onClick={onSignInClick} className="btn-primary">Sign in as Customer</button>
+      </div>
+    );
+  }
+
+  const savedIds = new Set(favs.favourites.map((f) => f.id));
+  const fromFavourites = listings.filter((l) => savedIds.has(l.business_id));
+
+  return (
+    <div>
+      <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-1">Favourites</h1>
+      <p className="text-ink-600 text-sm mb-6">Businesses you saved, and their latest meal boxes.</p>
+
+      {favs.loading && favs.favourites.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="inline-block w-8 h-8 border-3 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
+        </div>
+      ) : favs.favourites.length === 0 ? (
+        <div className="card p-8 text-center">
+          <Heart size={36} className="mx-auto text-ink-400 mb-3" />
+          <p className="text-ink-600 font-medium">No favourites yet.</p>
+          <p className="text-ink-400 text-sm mt-1">
+            Open a meal box and tap "Save this business" to add it here.
+          </p>
+        </div>
+      ) : (
+        <>
+          <h2 className="font-bold text-ink-900 mb-3">New from your favourites</h2>
+          {fromFavourites.length === 0 ? (
+            <p className="text-sm text-ink-500 mb-8">None of your favourite businesses has meal boxes right now.</p>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+              {fromFavourites.map((l) => (
+                <ListingCard key={l.id} listing={l} onClick={() => onOpenListing(l)} />
+              ))}
+            </div>
+          )}
+
+          <h2 className="font-bold text-ink-900 mb-3">Your saved businesses</h2>
+          <div className="space-y-3">
+            {favs.favourites.map((b) => (
+              <div key={b.id} className="card p-4 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-cream-200 flex items-center justify-center text-ink-600 flex-shrink-0">
+                  <Store size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-ink-900 truncate">{b.name}</p>
+                  <p className="text-sm text-ink-500 truncate">{b.business_type} · {b.location}</p>
+                </div>
+                <button onClick={() => favs.toggle(b.id)} className="btn-ghost text-orange-600">
+                  <Heart size={16} className="fill-orange-500" /> Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -359,11 +562,33 @@ function ListingDetailModal({
   listing,
   onClose,
   onReserved,
+  onRequireLogin,
+  isFavourite,
+  onToggleFavourite,
 }: {
   listing: Listing | null;
   onClose: () => void;
   onReserved: () => void;
+  onRequireLogin: () => void;
+  isFavourite: boolean;
+  onToggleFavourite: () => void;
 }) {
+  const { user } = useAuth();
+  const [profilePhone, setProfilePhone] = useState('');
+
+  // The phone number saved on the customer's account (used to pre-fill the form)
+  useEffect(() => {
+    if (!user) {
+      setProfilePhone('');
+      return;
+    }
+    supabase
+      .from('user_profiles')
+      .select('phone')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setProfilePhone(data?.phone ?? ''));
+  }, [user]);
   const [step, setStep] = useState<'detail' | 'form' | 'confirm'>('detail');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -388,8 +613,16 @@ function ListingDetailModal({
 
     const handleReserve = async () => {
     if (!listing) return;
-    if (!name.trim() || !phone.trim()) {
-      setSubmitError('Please enter your name and phone number.');
+    if (!user) {
+      onRequireLogin();
+      return;
+    }
+    if (!name.trim()) {
+      setSubmitError('Please enter your name.');
+      return;
+    }
+    if (!isValidMobile(phone)) {
+      setSubmitError(PHONE_ERROR);
       return;
     }
     if (quantity < 1 || quantity > listing.quantity_available) {
@@ -451,6 +684,13 @@ function ListingDetailModal({
           <p className="text-ink-700 font-medium text-sm mb-3">
             by {listing.business?.name ?? 'Business'}
           </p>
+          <button
+            onClick={onToggleFavourite}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-600 hover:underline mb-4"
+          >
+            <Heart size={15} className={isFavourite ? 'fill-orange-500 text-orange-500' : ''} />
+            {isFavourite ? 'Saved to favourites' : 'Save this business'}
+          </button>
 
           <p className="text-ink-600 leading-relaxed mb-5">{listing.description}</p>
 
@@ -493,12 +733,21 @@ function ListingDetailModal({
           </div>
 
           <button
-            onClick={() => { setStep('form'); setSubmitError(null); }}
+            onClick={() => {
+              if (!user) {
+                onRequireLogin();
+                return;
+              }
+              setName((n) => n || ((user.user_metadata?.full_name as string | undefined) ?? ''));
+              setPhone((p) => p || profilePhone);
+              setStep('form');
+              setSubmitError(null);
+            }}
             disabled={soldOut}
             className="btn-primary w-full"
           >
             <ShoppingBag size={20} />
-            {soldOut ? 'Sold Out' : 'Reserve This Box'}
+            {soldOut ? 'Sold Out' : user ? 'Reserve This Box' : 'Sign in to reserve'}
           </button>
           <p className="text-center text-xs text-ink-400 mt-3">
             Demo only — no real payment or phone verification will occur.
@@ -530,15 +779,20 @@ function ListingDetailModal({
             </div>
             <div>
               <label className="label-field">Phone Number</label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="07700 900000"
-                className="input-field"
-              />
+              <div className="flex items-center gap-2">
+                <span className="text-ink-600 font-medium">+91</span>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  value={phone}
+                  onChange={(e) => setPhone(cleanPhoneInput(e.target.value))}
+                  placeholder="9876543210"
+                  className="input-field"
+                />
+              </div>
               <p className="text-xs text-ink-400 mt-1">
-                For demo purposes only — no SMS will be sent.
+                10 digits, numbers only. The business may call you about your pickup. No SMS is sent in this demo.
               </p>
             </div>
             <div>

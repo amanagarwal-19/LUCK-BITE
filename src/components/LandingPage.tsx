@@ -53,7 +53,7 @@ export default function LandingPage({
                 Browse affordable meal boxes from local businesses and reserve yours for pickup.
               </p>
               <span className="inline-flex items-center gap-1.5 text-orange-600 font-semibold text-sm group-hover:gap-2.5 transition-all">
-                Browse marketplace <ArrowRight size={16} />
+                Discover food <ArrowRight size={16} />
               </span>
             </button>
 
