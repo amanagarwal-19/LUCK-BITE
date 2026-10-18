@@ -130,7 +130,7 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
       <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-6 pb-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-1">Discover Food</h1>
         <p className="text-ink-600 text-sm mb-5">
-          Browse surplus meal boxes from local businesses and reserve yours for pickup.
+          Browse surplus meals from local businesses and reserve yours for pickup.
         </p>
 
         <NearbyPanel nearby={nearby} />
@@ -207,7 +207,7 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
         {loading && (
           <div className="text-center py-20">
             <div className="inline-block w-8 h-8 border-3 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
-            <p className="text-ink-500 mt-3 text-sm">Loading meal boxes…</p>
+            <p className="text-ink-500 mt-3 text-sm">Loading meals…</p>
           </div>
         )}
 
@@ -222,7 +222,7 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
           <div className="text-center py-20">
             <Package size={40} className="mx-auto text-ink-400 mb-3" />
             <p className="text-ink-600 font-medium">
-              {nearby.active ? `No meal boxes within ${nearby.radiusKm} km right now.` : 'No meal boxes match your filters.'}
+              {nearby.active ? `No meals within ${nearby.radiusKm} km right now.` : 'No meals match your filters.'}
             </p>
             <p className="text-ink-400 text-sm mt-1">
               {nearby.active
@@ -398,7 +398,7 @@ function FavouritesPage({
         <Heart size={36} className="mx-auto text-ink-400 mb-3" />
         <h2 className="text-xl font-bold text-ink-900 mb-2">Sign in to see your favourites</h2>
         <p className="text-ink-600 text-sm mb-5">
-          Save businesses you like and quickly find their new meal boxes here.
+          Save businesses you like and quickly find their new meals here.
         </p>
         <button onClick={onSignInClick} className="btn-primary">Sign in as Customer</button>
       </div>
@@ -411,7 +411,7 @@ function FavouritesPage({
   return (
     <div>
       <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-1">Favourites</h1>
-      <p className="text-ink-600 text-sm mb-6">Businesses you saved, and their latest meal boxes.</p>
+      <p className="text-ink-600 text-sm mb-6">Businesses you saved, and their latest meals.</p>
 
       {favs.loading && favs.favourites.length === 0 ? (
         <div className="text-center py-16">
@@ -422,14 +422,14 @@ function FavouritesPage({
           <Heart size={36} className="mx-auto text-ink-400 mb-3" />
           <p className="text-ink-600 font-medium">No favourites yet.</p>
           <p className="text-ink-400 text-sm mt-1">
-            Open a meal box and tap "Save this business" to add it here.
+            Open a meal and tap "Save this business" to add it here.
           </p>
         </div>
       ) : (
         <>
           <h2 className="font-bold text-ink-900 mb-3">New from your favourites</h2>
           {fromFavourites.length === 0 ? (
-            <p className="text-sm text-ink-500 mb-8">None of your favourite businesses has meal boxes right now.</p>
+            <p className="text-sm text-ink-500 mb-8">None of your favourite businesses has meals right now.</p>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
               {fromFavourites.map((l) => (
@@ -547,7 +547,7 @@ function ListingCard({ listing, onClick }: { listing: Listing; onClick: () => vo
             </span>
           </div>
           <p className="text-xs text-ink-500 mt-0.5">
-            {soldOut ? 'Unavailable' : `${listing.quantity_available} box${listing.quantity_available !== 1 ? 'es' : ''} left`}
+            {soldOut ? 'Unavailable' : `${listing.quantity_available} item${listing.quantity_available !== 1 ? 's' : ''} left`}
           </p>
         </div>
         <span className="text-orange-600 font-semibold text-sm group-hover:translate-x-1 transition-transform">
@@ -698,7 +698,7 @@ function ListingDetailModal({
             <InfoRow icon={<MapPin size={16} />} label="Location" value={listing.business?.location ?? '—'} />
                         <InfoRow icon={<Clock size={16} />} label="Pickup" value={availabilityText(listing)} />
             <InfoRow icon={<Store size={16} />} label="Business type" value={listing.business?.business_type ?? '—'} />
-            <InfoRow icon={<Package size={16} />} label="Available" value={`${listing.quantity_available} box(es)`} />
+            <InfoRow icon={<Package size={16} />} label="Available" value={`${listing.quantity_available} item${listing.quantity_available !== 1 ? 's' : ''}`} />
           </div>
           {listing.business?.latitude != null && listing.business?.longitude != null && (
             <a
@@ -728,7 +728,7 @@ function ListingDetailModal({
                   ₹{listing.original_price.toFixed(2)}
                 </span>
               </div>
-              <p className="text-xs text-ink-500 mt-0.5">per box</p>
+              <p className="text-xs text-ink-500 mt-0.5">per item</p>
             </div>
           </div>
 
@@ -747,7 +747,7 @@ function ListingDetailModal({
             className="btn-primary w-full"
           >
             <ShoppingBag size={20} />
-            {soldOut ? 'Sold Out' : user ? 'Reserve This Box' : 'Sign in to reserve'}
+            {soldOut ? 'Sold Out' : user ? 'Reserve This Item' : 'Sign in to reserve'}
           </button>
           <p className="text-center text-xs text-ink-400 mt-3">
             Demo only — no real payment or phone verification will occur.
@@ -761,9 +761,9 @@ function ListingDetailModal({
             <ArrowLeft size={16} /> Back to details
           </button>
 
-          <h2 className="text-xl font-bold text-ink-900 mb-1">Reserve your box</h2>
+          <h2 className="text-xl font-bold text-ink-900 mb-1">Reserve your item</h2>
           <p className="text-sm text-ink-600 mb-5">
-            {listing.meal_name} — ₹{listing.discounted_price.toFixed(2)} per box
+            {listing.meal_name} — ₹{listing.discounted_price.toFixed(2)} per item
           </p>
 
           <div className="space-y-4">
@@ -849,7 +849,7 @@ function ListingDetailModal({
           </div>
           <h2 className="text-2xl font-bold text-ink-900 mb-1">Reservation Confirmed!</h2>
           <p className="text-sm text-ink-600 mb-6">
-            Your box has been reserved. Show your pickup code at collection.
+            Your item has been reserved. Show your pickup code at collection.
           </p>
 
           <div className="rounded-2xl bg-cream-200/60 border border-orange-200 p-5 mb-5">
@@ -860,7 +860,7 @@ function ListingDetailModal({
               <ConfirmRow label="Reference" value={reservation.id.slice(0, 8).toUpperCase()} />
               <ConfirmRow label="Meal" value={listing.meal_name} />
               <ConfirmRow label="Business" value={listing.business?.name ?? '—'} />
-              <ConfirmRow label="Quantity" value={`${quantity} box(es)`} />
+              <ConfirmRow label="Quantity" value={`${quantity} item${quantity !== 1 ? 's' : ''}`} />
               <ConfirmRow label="Total" value={`₹${total}`} />
                             <ConfirmRow label="Pickup" value={availabilityText(listing)} />
               <ConfirmRow label="Location" value={listing.business?.location ?? '—'} />

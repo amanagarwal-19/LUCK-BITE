@@ -50,7 +50,7 @@ export default function ReservationManagement({
 
   const handleCancel = async (reservation: Reservation) => {
     setActionError(null);
-    // The database also returns the reserved boxes to the listing's stock
+    // The database also returns the reserved items to the listing's stock
     const { error: rErr } = await supabase.rpc('set_reservation_status', {
       p_reservation_id: reservation.id,
       p_status: 'cancelled',
@@ -120,7 +120,7 @@ export default function ReservationManagement({
           <Clock size={32} className="mx-auto text-ink-400 mb-2" />
           <p className="text-ink-600 font-medium">No reservations yet.</p>
           <p className="text-ink-400 text-sm mt-1">
-            When customers reserve your boxes, they'll appear here.
+            When customers reserve your items, they'll appear here.
           </p>
         </div>
       ) : (

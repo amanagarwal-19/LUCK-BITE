@@ -20,14 +20,13 @@ export default function LandingPage({
           {/* Nav */}
           <nav className="flex items-center justify-between mb-16 sm:mb-24">
             <Logo size="lg" />
-            <span className="badge bg-white/80 text-ink-600 backdrop-blur">Demo Prototype</span>
           </nav>
 
           {/* Hero content */}
           <div className="text-center max-w-2xl mx-auto">
             <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-1.5 text-sm font-semibold text-orange-700 mb-6 animate-fade-in">
               <Sparkles size={16} />
-              Eureka Junior Entrepreneurship Competition
+              Food Is Sacred; Sharing Is Dharma.
             </div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.1] text-ink-900 mb-5 animate-slide-up">
               Safe surplus.<br />
@@ -50,7 +49,7 @@ export default function LandingPage({
               </div>
               <h2 className="text-xl font-bold text-ink-900 mb-2">I'm a Customer</h2>
               <p className="text-ink-600 text-sm leading-relaxed mb-4">
-                Browse affordable meal boxes from local businesses and reserve yours for pickup.
+                Browse affordable meals from local businesses and reserve yours for pickup.
               </p>
               <span className="inline-flex items-center gap-1.5 text-orange-600 font-semibold text-sm group-hover:gap-2.5 transition-all">
                 Discover food <ArrowRight size={16} />
@@ -85,7 +84,7 @@ export default function LandingPage({
             </div>
             <h3 className="font-bold text-ink-900 mb-1.5">Reduce food waste</h3>
             <p className="text-sm text-ink-600 leading-relaxed">
-              Surplus food finds a home instead of going to waste. Every box rescued makes a difference.
+              Surplus food finds a home instead of going to waste. Every meal rescued makes a difference.
             </p>
           </div>
           <div className="card p-6">
@@ -94,7 +93,7 @@ export default function LandingPage({
             </div>
             <h3 className="font-bold text-ink-900 mb-1.5">Affordable meals</h3>
             <p className="text-sm text-ink-600 leading-relaxed">
-              Customers get quality food at a fraction of the original price — boxes are typically 50–70% off.
+              Customers get quality food at a fraction of the original price — meals are typically 50–70% off.
             </p>
           </div>
           <div className="card p-6">

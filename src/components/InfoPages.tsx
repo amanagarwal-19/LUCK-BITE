@@ -56,7 +56,7 @@ function Faq({ q, children }: { q: string; children: React.ReactNode }) {
 
 export const SUPPORT_TOPICS = [
   { value: 'reservation', label: 'A reservation' },
-  { value: 'collection', label: 'Collecting my box' },
+  { value: 'collection', label: 'Collecting my meal' },
   { value: 'cancellation', label: 'Cancelling or changing a reservation' },
   { value: 'food_safety', label: 'A food safety concern' },
   { value: 'account', label: 'My account or login' },
@@ -106,10 +106,10 @@ export function HelpSupportPage({ initialTopic = 'reservation' }: { initialTopic
     <PageShell title="Help & Support" subtitle="Answers to common questions, and a way to reach us.">
       <Section title="Reservations">
         <div>
-          <Faq q="How do I reserve a meal box?">
+          <Faq q="How do I reserve a meal?">
             <p>
-              Sign in or create a customer account, open a listing in Discover Food, and tap "Reserve This Box".
-              Confirm your name and a valid 10-digit mobile number, choose how many boxes you want, and confirm. You'll
+              Sign in or create a customer account, open a listing in Discover Food, and tap "Reserve This Item".
+              Confirm your name and a valid 10-digit mobile number, choose how many items you want, and confirm. You'll
               get a pickup code, which is also saved under My Reservations.
             </p>
           </Faq>
@@ -122,7 +122,7 @@ export function HelpSupportPage({ initialTopic = 'reservation' }: { initialTopic
           <Faq q="Do I pay through Luck Bite?">
             <p>
               Luck Bite does not take payments in the app at the moment. The price shown is the price the business has
-              listed for the box. Any payment is arranged between you and the business when you collect.
+              listed for the item. Any payment is arranged between you and the business when you collect.
             </p>
           </Faq>
           <Faq q="Where can I find my pickup code?">
@@ -130,8 +130,8 @@ export function HelpSupportPage({ initialTopic = 'reservation' }: { initialTopic
           </Faq>
           <Faq q="Why does a listing say Sold out or Unavailable?">
             <p>
-              Every box has a limited quantity. Once all boxes are reserved, the listing is shown as unavailable. If a
-              reservation is cancelled, its boxes go back on offer.
+              Every item has a limited quantity. Once all of them are reserved, the listing is shown as unavailable. If a
+              reservation is cancelled, its items go back on offer.
             </p>
           </Faq>
         </div>
@@ -147,7 +147,7 @@ export function HelpSupportPage({ initialTopic = 'reservation' }: { initialTopic
           </Faq>
           <Faq q="What if I am late?">
             <p>
-              The business decides what to do. It may cancel your reservation and offer the box to someone else. If you
+              The business decides what to do. It may cancel your reservation and offer the food to someone else. If you
               are running late, contact the business, or us using the form below.
             </p>
           </Faq>
@@ -163,7 +163,7 @@ export function HelpSupportPage({ initialTopic = 'reservation' }: { initialTopic
             <p>
               Not inside the app yet. If you can no longer collect, please tell us using the form below and include
               your pickup code, and contact the business if you can. The business can mark the reservation as
-              cancelled, which puts the box back on offer for someone else.
+              cancelled, which puts the item back on offer for someone else.
             </p>
           </Faq>
           <Faq q="Is there a refund?">
@@ -180,7 +180,7 @@ export function HelpSupportPage({ initialTopic = 'reservation' }: { initialTopic
           <Faq q="Where can I see allergen and storage information?">
             <p>
               On each listing's details page, under "Allergen & Storage Info". If it is empty or unclear, ask the
-              business before you collect. A meal box may contain allergens even if they are not listed, so if you have
+              business before you collect. A meal may contain allergens even if they are not listed, so if you have
               an allergy, always check with the business directly.
             </p>
           </Faq>
@@ -336,7 +336,7 @@ export function AboutPage() {
       <Section title="Our mission">
         <p>
           Restaurants, cafés and bakeries often end the day with good food they were not able to sell. Luck Bite helps
-          food businesses recover some value from that safe surplus by offering it as meal boxes at a lower price. At
+          food businesses recover some value from that safe surplus by offering it as meals at a lower price. At
           the same time, it makes affordable meals easier to find for students and for anyone who watches their budget.
         </p>
       </Section>
@@ -360,8 +360,8 @@ export function AboutPage() {
       <Section title="How it works">
         <Bullets
           items={[
-            'Verified food businesses list their surplus meal boxes with a price, a quantity and a time to collect by.',
-            'You find boxes near you in Discover Food and reserve the ones you want.',
+            'Verified food businesses list their surplus meals and food items with a price, a quantity and a time to collect by.',
+            'You find meals near you in Discover Food and reserve the ones you want.',
             'You collect from the business before the "Available till" time using your pickup code.',
           ]}
         />
@@ -398,7 +398,7 @@ export function FoodSafetyPage({ onReportConcern }: { onReportConcern: () => voi
           <AlertTriangle size={18} className="text-warning-700 flex-shrink-0 mt-0.5" />
           <span>
             Verification is not a food safety inspection or certification, and it is not a guarantee about any
-            particular meal box. Businesses are responsible for the food they offer and for following the food safety
+            particular meal. Businesses are responsible for the food they offer and for following the food safety
             laws that apply to them.
           </span>
         </p>
@@ -407,7 +407,7 @@ export function FoodSafetyPage({ onReportConcern }: { onReportConcern: () => voi
       <Section title="What to check before you reserve and eat">
         <Bullets
           items={[
-            'Read the description and the "Allergen & Storage Info" on the listing. If you have an allergy, ask the business directly. A box can contain allergens that are not listed.',
+            'Read the description and the "Allergen & Storage Info" on the listing. If you have an allergy, ask the business directly. A meal can contain allergens that are not listed.',
             'Note the "Available till" time and collect before it.',
             'When you collect, check that the food looks and smells fresh, and that packaging is intact.',
             'Follow any storage advice, keep food cool or hot as advised, and eat it soon after collection.',
@@ -490,8 +490,8 @@ function TermsOfUse() {
       </Section>
       <Section title="3. Reservations">
         <p>
-          Reserving a box means you are asking to collect it from the business before its "Available till" time,
-          using your pickup code. We expect businesses to honour reservations, but we cannot guarantee that every box
+          Reserving an item means you are asking to collect it from the business before its "Available till" time,
+          using your pickup code. We expect businesses to honour reservations, but we cannot guarantee that every item
           will be ready. We may limit or cancel reservations that look false or abusive.
         </p>
       </Section>
@@ -505,7 +505,7 @@ function TermsOfUse() {
         <p>
           You cannot cancel inside the app yet. If you cannot collect, please contact us through Help & Support with
           your pickup code, and contact the business if you can. A business may cancel a reservation, for example if the
-          food is no longer available. A cancelled box goes back on offer.
+          food is no longer available. A cancelled item goes back on offer.
         </p>
         <p>
           Because Luck Bite does not take payment in the app, we have nothing to refund. If you paid a business directly,
@@ -524,7 +524,7 @@ function TermsOfUse() {
         <Bullets
           items={[
             'Do not give false details, such as a fake phone number.',
-            'Do not reserve boxes you do not plan to collect.',
+            'Do not reserve items you do not plan to collect.',
             'Do not try to access other people\'s data, disrupt the service, or copy it by automated means.',
             'Do not harass businesses, customers or our team, and do not use Luck Bite for anything illegal.',
           ]}
@@ -545,7 +545,7 @@ function TermsOfUse() {
       <Section title="10. Our responsibility">
         <p>
           Luck Bite is provided as an early-stage service, "as is". To the extent the law allows, we are not responsible
-          for the food offered by businesses, for what businesses do, or for loss caused by a box being unavailable.
+          for the food offered by businesses, for what businesses do, or for loss caused by an item being unavailable.
           Nothing in these terms excludes responsibility that cannot be excluded by law.
         </p>
       </Section>
@@ -590,7 +590,7 @@ function PrivacyPolicy() {
       <Section title="3. Who can see your information">
         <Bullets
           items={[
-            'A business can see the name and phone number you give when you reserve one of its boxes.',
+            'A business can see the name and phone number you give when you reserve one of its items.',
             'Your date of birth and gender are not shown to businesses.',
             'Administrators can see the information needed to run Luck Bite, such as business applications, support messages and the change record.',
             'We do not sell your personal information.',

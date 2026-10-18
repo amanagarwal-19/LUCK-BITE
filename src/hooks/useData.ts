@@ -66,7 +66,7 @@ export function useBusinessListings(businessId: string | null) {
   return { listings, loading, error, refetch: fetchListings };
 }
 
-// Meal boxes near the customer (sorted by distance, or by collection time)
+// Meals near the customer (sorted by distance, or by collection time)
 export function useNearbyListings(
   coords: { lat: number; lng: number } | null,
   radiusKm: number,

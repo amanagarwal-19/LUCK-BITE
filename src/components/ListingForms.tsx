@@ -180,12 +180,12 @@ export function ListingFormModal({
       <div className="space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="label-field">Meal Box Name *</label>
+            <label className="label-field">Item / Meal Name *</label>
             <input
               type="text"
               value={form.meal_name}
               onChange={(e) => update('meal_name', e.target.value)}
-              placeholder="Artisan Bread Bundle"
+              placeholder="Paneer Butter Masala"
               className="input-field"
             />
           </div>
@@ -208,7 +208,7 @@ export function ListingFormModal({
           <textarea
             value={form.description}
             onChange={(e) => update('description', e.target.value)}
-            placeholder="Describe what's in the box and why it's surplus…"
+            placeholder="Describe your food: what it is, how it tastes, serving size…"
             rows={3}
             className="input-field resize-none"
           />
@@ -233,7 +233,7 @@ export function ListingFormModal({
               step="0.50"
               value={form.original_price}
               onChange={(e) => update('original_price', e.target.value)}
-              placeholder="18.00"
+              placeholder="300"
               className="input-field"
             />
           </div>
@@ -245,7 +245,7 @@ export function ListingFormModal({
               step="0.50"
               value={form.discounted_price}
               onChange={(e) => update('discounted_price', e.target.value)}
-              placeholder="7.50"
+              placeholder="150"
               className="input-field"
             />
           </div>
@@ -282,12 +282,12 @@ export function ListingFormModal({
         </div>
 
         <div>
-          <label className="label-field">Meal Photo (optional)</label>
+          <label className="label-field">Item Photo (optional)</label>
           {photoPreview || existingPhotoUrl ? (
             <div className="relative w-full sm:w-64">
               <img
                 src={photoPreview ?? existingPhotoUrl ?? ''}
-                alt="Meal preview"
+                alt="Item preview"
                 className="w-full h-40 object-cover rounded-xl border border-ink-900/10"
               />
               <button
@@ -389,7 +389,7 @@ export function ListingCard({
 
       <div className="space-y-1.5 text-sm text-ink-500 mb-4">
         <div className="flex items-center gap-2">
-          <Package size={15} className="text-ink-400" /> {listing.quantity_available} box(es) available
+          <Package size={15} className="text-ink-400" /> {listing.quantity_available} item{listing.quantity_available !== 1 ? 's' : ''} available
         </div>
         <div className="flex items-center gap-2">
           <Tag size={15} className="text-ink-400" /> ₹{listing.discounted_price.toFixed(2)} (was ₹{listing.original_price.toFixed(2)})

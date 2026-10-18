@@ -22,7 +22,7 @@ export default function MyReservations({ onSignInClick }: { onSignInClick?: () =
         <Package size={36} className="mx-auto text-ink-400 mb-3" />
         <h2 className="text-xl font-bold text-ink-900 mb-2">Sign in to see your reservations</h2>
         <p className="text-ink-600 text-sm mb-5">
-          Your reserved meal boxes and pickup codes are saved to your customer account.
+          Your reserved meals and pickup codes are saved to your customer account.
         </p>
         {onSignInClick && (
           <button onClick={onSignInClick} className="btn-primary">Sign in as Customer</button>
@@ -35,7 +35,7 @@ export default function MyReservations({ onSignInClick }: { onSignInClick?: () =
     <div>
       <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-1">My Reservations</h1>
       <p className="text-ink-600 text-sm mb-5">
-        Your reserved meal boxes and their pickup codes.
+        Your reserved meals and their pickup codes.
       </p>
 
       {loading ? (
@@ -47,7 +47,7 @@ export default function MyReservations({ onSignInClick }: { onSignInClick?: () =
           <Package size={36} className="mx-auto text-ink-400 mb-3" />
           <p className="text-ink-600 font-medium">No reservations yet.</p>
           <p className="text-ink-400 text-sm mt-1">
-            Browse Discover Food and reserve a meal box to see it here.
+            Browse Discover Food and reserve a meal to see it here.
           </p>
         </div>
       ) : (
@@ -90,7 +90,7 @@ export default function MyReservations({ onSignInClick }: { onSignInClick?: () =
                   </div>
                   <div className="flex items-center gap-2">
                     <Package size={15} className="text-ink-400" />
-                    {r.quantity} box(es) · ₹{total}
+                    {r.quantity} item{r.quantity !== 1 ? 's' : ''} · ₹{total}
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin size={15} className="text-ink-400" />

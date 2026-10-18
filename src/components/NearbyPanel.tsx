@@ -19,9 +19,9 @@ export default function NearbyPanel({ nearby }: { nearby: NearbySettings }) {
           <Navigation size={22} />
         </div>
         <div className="flex-1">
-          <h2 className="font-bold text-ink-900">Find meal boxes near you</h2>
+          <h2 className="font-bold text-ink-900">Find meals near you</h2>
           <p className="text-sm text-ink-600">
-            Share your location and we'll show boxes from nearby businesses. It's only used to find nearby food and is
+            Share your location and we'll show meals from nearby businesses. It's only used to find nearby food and is
             saved in your browser, not on your profile.
           </p>
           {message && <p className="text-sm text-error-700 mt-2">{message}</p>}
@@ -48,7 +48,7 @@ export default function NearbyPanel({ nearby }: { nearby: NearbySettings }) {
     <div className="card p-5 mb-5">
       <div className="flex items-center gap-2 mb-3">
         <Navigation size={18} className="text-orange-500" />
-        <h2 className="font-bold text-ink-900">Showing boxes near you</h2>
+        <h2 className="font-bold text-ink-900">Showing meals near you</h2>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
