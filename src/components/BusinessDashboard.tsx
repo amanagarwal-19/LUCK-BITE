@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Modal from '@/components/Modal';
 import LocationPicker from '@/components/LocationPicker';
 import type { PickedLocation } from '@/components/LocationPicker';
-import { ArrowLeft, Plus, Package, ClipboardList, Store, MapPin, Mail, Phone, Clock, Tag, LogOut } from 'lucide-react';
+import { ArrowLeft, Plus, Package, ClipboardList, Store, MapPin, Mail, Phone, Clock, Tag, LogOut, BarChart3 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useBusinessListings, useBusinessReservations } from '@/hooks/useData';
 import { useAuth } from '@/lib/AuthContext';
@@ -11,8 +11,9 @@ import { Badge } from '@/components/Badge';
 import Logo from '@/components/Logo';
 import { ListingFormModal, ListingCard } from '@/components/ListingForms';
 import ReservationManagement from '@/components/ReservationManagement';
+import BusinessAnalytics from '@/components/BusinessAnalytics';
 
-type Tab = 'listings' | 'reservations';
+type Tab = 'listings' | 'reservations' | 'analytics';
 
 export default function BusinessDashboard({
   business,
@@ -47,7 +48,7 @@ export default function BusinessDashboard({
     if (!confirm(`Delete "${l.meal_name}"? This cannot be undone.`)) return;
     const { error } = await supabase.from('listings').delete().eq('id', l.id);
     if (error) {
-      alert('Could not delete this listing. Your business may not be verified or you may not have permission.');
+      alert(error.message || 'Could not delete this listing. Your business may not be verified or you may not have permission.');
       return;
     }
     refetchListings();
@@ -131,13 +132,16 @@ export default function BusinessDashboard({
               <span className="ml-1.5 badge bg-orange-500 text-white px-1.5 py-0.5 text-[10px]">{pendingReservations}</span>
             )}
           </TabButton>
+          <TabButton active={tab === 'analytics'} onClick={() => setTab('analytics')} icon={<BarChart3 size={17} />}>
+            Impact & Performance
+          </TabButton>
         </div>
 
         {/* Tab content */}
         {tab === 'listings' && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-ink-900">Meal Box Listings</h2>
+              <h2 className="text-xl font-bold text-ink-900">Food Listings</h2>
               <button onClick={openAdd} className="btn-primary">
                 <Plus size={18} /> Add Listing
               </button>
@@ -152,7 +156,7 @@ export default function BusinessDashboard({
                 <Package size={36} className="mx-auto text-ink-400 mb-3" />
                 <p className="text-ink-600 font-medium">No listings yet.</p>
                 <p className="text-ink-400 text-sm mt-1 mb-4">
-                  Add your first surplus meal box to start selling.
+                  Add your first food item to start selling.
                 </p>
                 <button onClick={openAdd} className="btn-primary">
                   <Plus size={18} /> Add Your First Listing
@@ -173,6 +177,8 @@ export default function BusinessDashboard({
             )}
           </div>
         )}
+
+        {tab === 'analytics' && <BusinessAnalytics businessId={business.id} />}
 
         {tab === 'reservations' && (
           <ReservationManagement
