@@ -14,6 +14,7 @@ import AccountPage from '@/components/AccountPage';
 import { useAuth } from '@/lib/AuthContext';
 import { availabilityText } from '@/lib/utils';
 import NearbyPanel from '@/components/NearbyPanel';
+import PickupQr from '@/components/PickupQr';
 import { useNearbySettings, formatDistance, formatTimeLeft, mapUrl } from '@/lib/nearby';
 import { useFavourites } from '@/hooks/useFavourites';
 import { HelpSupportPage, AboutPage, FoodSafetyPage, TermsPrivacyPage } from '@/components/InfoPages';
@@ -854,7 +855,11 @@ function ListingDetailModal({
 
           <div className="rounded-2xl bg-cream-200/60 border border-orange-200 p-5 mb-5">
             <p className="text-xs font-semibold text-ink-500 uppercase tracking-wide mb-1">Pickup Code</p>
-            <p className="text-3xl font-bold text-orange-600 font-display tracking-wider mb-4">{reservation.code}</p>
+            <p className="text-3xl font-bold text-orange-600 font-display tracking-wider mb-3">{reservation.code}</p>
+            <div className="mb-4">
+              <PickupQr code={reservation.code} size={150} />
+              <p className="text-xs text-ink-500 mt-2">Show this QR code (or the code above) when you collect.</p>
+            </div>
 
             <div className="text-left space-y-2 text-sm border-t border-ink-900/10 pt-4">
               <ConfirmRow label="Reference" value={reservation.id.slice(0, 8).toUpperCase()} />
@@ -875,7 +880,7 @@ function ListingDetailModal({
           </div>
 
           <button onClick={handleClose} className="btn-primary w-full">
-            Done — Back to Marketplace
+            Done — Back to Discover Food
           </button>
         </div>
       )}

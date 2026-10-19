@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import { useCustomerReservations } from '@/hooks/useData';
+import Modal from '@/components/Modal';
+import PickupQr from '@/components/PickupQr';
+import type { Reservation } from '@/types';
 import { useAuth } from '@/lib/AuthContext';
 import { Badge } from '@/components/Badge';
-import { Package, Clock, CheckCircle2, XCircle, MapPin, Store, Calendar } from 'lucide-react';
+import { Package, Clock, CheckCircle2, XCircle, MapPin, Store, Calendar, QrCode } from 'lucide-react';
 import { availabilityText } from '@/lib/utils';
 
 const STATUS_CONFIG = {
@@ -15,6 +19,7 @@ export default function MyReservations({ onSignInClick }: { onSignInClick?: () =
   const { user, loading: authLoading } = useAuth();
   // Reservations belong to the signed-in account
   const { reservations, loading, refetch } = useCustomerReservations(null, user?.id ?? null);
+  const [qrFor, setQrFor] = useState<Reservation | null>(null);
 
   if (!authLoading && !user) {
     return (
@@ -55,7 +60,8 @@ export default function MyReservations({ onSignInClick }: { onSignInClick?: () =
           {reservations.map((r) => {
             const cfg = STATUS_CONFIG[r.status] ?? STATUS_CONFIG.pending;
             const Icon = cfg.icon;
-            const total = r.listing ? (r.listing.discounted_price * r.quantity).toFixed(2) : '—';
+            const unitPrice = r.unit_price ?? r.listing?.discounted_price;
+            const total = unitPrice != null ? (unitPrice * r.quantity).toFixed(2) : '—';
 
             return (
               <div key={r.id} className="card p-5">
@@ -69,10 +75,12 @@ export default function MyReservations({ onSignInClick }: { onSignInClick?: () =
                       {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                   </div>
-                  <div className="rounded-lg bg-cream-200/60 px-3 py-1.5 text-center">
-                    <p className="text-xs text-ink-400 font-semibold uppercase tracking-wide">Pickup Code</p>
-                    <p className="font-bold text-ink-900 font-display tracking-wider">{r.pickup_code}</p>
-                  </div>
+                  {r.status === 'pending' && r.pickup_code && (
+                    <div className="rounded-lg bg-cream-200/60 px-3 py-1.5 text-center">
+                      <p className="text-xs text-ink-400 font-semibold uppercase tracking-wide">Pickup Code</p>
+                      <p className="font-bold text-ink-900 font-display tracking-wider">{r.pickup_code}</p>
+                    </div>
+                  )}
                 </div>
 
                 <h3 className="font-bold text-lg text-ink-900 mb-2">
@@ -105,11 +113,23 @@ export default function MyReservations({ onSignInClick }: { onSignInClick?: () =
                     </p>
                   </div>
                 )}
+                {r.status === 'pending' && r.pickup_code && (
+                  <button onClick={() => setQrFor(r)} className="btn-secondary mt-4 w-full sm:w-auto">
+                    <QrCode size={16} /> Show QR code for pickup
+                  </button>
+                )}
                 {r.status === 'collected' && (
-                  <div className="mt-3 rounded-xl bg-green-100/60 border border-green-400/20 p-3">
-                    <p className="text-xs text-green-600">
-                      Collected — thank you for helping reduce food waste!
-                    </p>
+                  <div className="mt-3 rounded-xl bg-green-100 border border-green-400/30 p-4 flex items-center gap-3">
+                    <CheckCircle2 size={28} className="text-green-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-bold text-green-600">Collected</p>
+                      <p className="text-xs text-ink-600">
+                        {r.collected_at
+                          ? `Confirmed on ${new Date(r.collected_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}. `
+                          : ''}
+                        Thank you for helping reduce food waste!
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -120,6 +140,22 @@ export default function MyReservations({ onSignInClick }: { onSignInClick?: () =
           </button>
         </div>
       )}
+
+      <Modal open={!!qrFor} onClose={() => setQrFor(null)} title="Show this at pickup" size="sm">
+        {qrFor && qrFor.pickup_code && (
+          <div className="text-center">
+            <PickupQr code={qrFor.pickup_code} size={220} />
+            <p className="text-3xl font-bold text-orange-600 font-display tracking-wider mt-4">{qrFor.pickup_code}</p>
+            <p className="text-sm text-ink-700 mt-1">
+              {qrFor.listing?.meal_name} × {qrFor.quantity}
+            </p>
+            <p className="text-xs text-ink-500 mt-3">
+              The business will scan this QR code, or you can read out the code. It can only be used once.
+            </p>
+            <button onClick={() => setQrFor(null)} className="btn-secondary w-full mt-5">Close</button>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

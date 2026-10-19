@@ -145,7 +145,7 @@ export function useBusinessReservations(businessId: string | null) {
     setLoading(true);
     const { data, error } = await supabase
       .from('reservations')
-      .select(`*, listing:listings(*, business:businesses(${PUBLIC_BUSINESS_COLUMNS}))`)
+      .select(`id,listing_id,customer_name,customer_phone,quantity,status,created_at,unit_price,original_unit_price,collected_at, listing:listings(*, business:businesses(${PUBLIC_BUSINESS_COLUMNS}))`)
       .in('listing_id', (
         await supabase.from('listings').select('id').eq('business_id', businessId)
       ).data?.map((l) => l.id) ?? [])

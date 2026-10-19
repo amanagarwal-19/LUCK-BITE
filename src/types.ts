@@ -51,20 +51,31 @@ export interface Reservation {
   customer_name: string;
   customer_phone: string;
   quantity: number;
-  pickup_code: string;
+  // Customers see their pickup code. Businesses never receive it (they must be shown it).
+  pickup_code?: string;
   status: 'pending' | 'collected' | 'cancelled' | 'expired';
   created_at: string;
-  session_id: string | null;
+  session_id?: string | null;
+  unit_price?: number | null;
+  original_unit_price?: number | null;
+  collected_at?: string | null;
   listing?: Listing;
 }
 
 export const MEAL_CATEGORIES = [
-  'Bakery',
+  'Starters',
+  'Main Course',
+  'Rice & Biryani',
+  'Breads',
   'Meals',
-  'Produce',
+  'Snacks',
+  'Fast Food',
+  'Bakery',
   'Sweets',
-  'Dairy',
+  'Desserts',
   'Beverages',
+  'Dairy',
+  'Other',
 ] as const;
 
 export const BUSINESS_TYPES = [
