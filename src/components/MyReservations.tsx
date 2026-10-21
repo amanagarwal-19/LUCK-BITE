@@ -5,7 +5,7 @@ import PickupQr from '@/components/PickupQr';
 import type { Reservation } from '@/types';
 import { useAuth } from '@/lib/AuthContext';
 import { Badge } from '@/components/Badge';
-import { Package, Clock, CheckCircle2, XCircle, MapPin, Store, Calendar, QrCode } from 'lucide-react';
+import { Package, Clock, CheckCircle2, XCircle, Store, Calendar, QrCode, Hash, RefreshCw, IndianRupee } from 'lucide-react';
 import { availabilityText } from '@/lib/utils';
 
 const STATUS_CONFIG = {
@@ -14,6 +14,19 @@ const STATUS_CONFIG = {
   cancelled: { label: 'Cancelled', variant: 'error' as const, icon: XCircle },
   expired: { label: 'Expired', variant: 'neutral' as const, icon: Clock },
 };
+
+// One labelled detail (icon, small label, value) so every reservation card lines up the same way
+function Detail({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2.5 min-w-0">
+      <span className="mt-0.5 text-ink-400 flex-shrink-0">{icon}</span>
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-400 leading-tight">{label}</p>
+        <p className="text-sm font-medium text-ink-800 break-words">{children}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function MyReservations({ onSignInClick }: { onSignInClick?: () => void }) {
   const { user, loading: authLoading } = useAuth();
@@ -62,11 +75,13 @@ export default function MyReservations({ onSignInClick }: { onSignInClick?: () =
             const Icon = cfg.icon;
             const unitPrice = r.unit_price ?? r.listing?.discounted_price;
             const total = unitPrice != null ? (unitPrice * r.quantity).toFixed(2) : '—';
+            // The pickup deadline only matters while the reservation is still waiting to be collected
+            const isPending = r.status === 'pending';
 
             return (
-              <div key={r.id} className="card p-5">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex gap-2 flex-wrap">
+              <div key={r.id} className="card p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
                     <Badge variant={cfg.variant}>
                       <Icon size={13} /> {cfg.label}
                     </Badge>
@@ -75,57 +90,59 @@ export default function MyReservations({ onSignInClick }: { onSignInClick?: () =
                       {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                   </div>
-                  {r.status === 'pending' && r.pickup_code && (
-                    <div className="rounded-lg bg-cream-200/60 px-3 py-1.5 text-center">
-                      <p className="text-xs text-ink-400 font-semibold uppercase tracking-wide">Pickup Code</p>
+                  {isPending && r.pickup_code && (
+                    <div className="rounded-lg bg-cream-200/60 px-3 py-1.5 text-center flex-shrink-0">
+                      <p className="text-[10px] text-ink-400 font-semibold uppercase tracking-wide">Pickup code</p>
                       <p className="font-bold text-ink-900 font-display tracking-wider">{r.pickup_code}</p>
                     </div>
                   )}
                 </div>
 
-                <h3 className="font-bold text-lg text-ink-900 mb-2">
+                <h3 className="font-bold text-lg text-ink-900 mt-3 break-words">
                   {r.listing?.meal_name ?? 'Unknown meal'}
                 </h3>
+                <p className="text-sm text-ink-500 mt-0.5 flex items-center gap-1.5 min-w-0">
+                  <Store size={14} className="text-ink-400 flex-shrink-0" />
+                  <span className="truncate">{r.listing?.business?.name ?? '—'}</span>
+                </p>
 
-                <div className="grid sm:grid-cols-2 gap-2 text-sm text-ink-500">
-                  <div className="flex items-center gap-2">
-                    <Store size={15} className="text-ink-400" />
-                    {r.listing?.business?.name ?? '—'}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock size={15} className="text-ink-400" />
-                  {r.listing ? availabilityText(r.listing) : '—'}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Package size={15} className="text-ink-400" />
-                    {r.quantity} item{r.quantity !== 1 ? 's' : ''} · ₹{total}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin size={15} className="text-ink-400" />
-                    Ref: {r.id.slice(0, 8).toUpperCase()}
-                  </div>
+                <div className="mt-4 pt-4 border-t border-ink-900/5 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+                  <Detail icon={<Package size={15} />} label="Quantity">
+                    {r.quantity} item{r.quantity !== 1 ? 's' : ''}
+                  </Detail>
+                  <Detail icon={<IndianRupee size={15} />} label="Total">
+                    ₹{total}
+                  </Detail>
+                  <Detail icon={<Hash size={15} />} label="Reference">
+                    {r.id.slice(0, 8).toUpperCase()}
+                  </Detail>
+                  {isPending && (
+                    <Detail icon={<Clock size={15} />} label="Pickup">
+                      {r.listing ? availabilityText(r.listing) : '—'}
+                    </Detail>
+                  )}
                 </div>
 
                 {r.status === 'cancelled' && (
-                  <div className="mt-3 rounded-xl bg-error-100/60 border border-error-500/20 p-3">
+                  <div className="mt-4 rounded-xl bg-error-100/60 border border-error-500/20 p-3">
                     <p className="text-xs text-error-700">
                       This reservation was cancelled. The reserved quantity has been returned to the listing.
                     </p>
                   </div>
                 )}
-                {r.status === 'pending' && r.pickup_code && (
+                {isPending && r.pickup_code && (
                   <button onClick={() => setQrFor(r)} className="btn-secondary mt-4 w-full sm:w-auto">
                     <QrCode size={16} /> Show QR code for pickup
                   </button>
                 )}
                 {r.status === 'collected' && (
-                  <div className="mt-3 rounded-xl bg-green-100 border border-green-400/30 p-4 flex items-center gap-3">
-                    <CheckCircle2 size={28} className="text-green-600 flex-shrink-0" />
-                    <div>
-                      <p className="font-bold text-green-600">Collected</p>
-                      <p className="text-xs text-ink-600">
+                  <div className="mt-4 rounded-xl bg-green-50 border border-green-400/30 p-3.5 flex items-start gap-3">
+                    <CheckCircle2 size={22} className="text-green-600 flex-shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-green-600">Pickup confirmed</p>
+                      <p className="text-xs text-ink-600 mt-0.5">
                         {r.collected_at
-                          ? `Confirmed on ${new Date(r.collected_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}. `
+                          ? `${new Date(r.collected_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · `
                           : ''}
                         Thank you for helping reduce food waste!
                       </p>
@@ -135,8 +152,8 @@ export default function MyReservations({ onSignInClick }: { onSignInClick?: () =
               </div>
             );
           })}
-          <button onClick={refetch} className="btn-ghost text-sm mx-auto block">
-            Refresh
+          <button onClick={refetch} className="btn-ghost text-sm mx-auto flex">
+            <RefreshCw size={14} /> Refresh
           </button>
         </div>
       )}
