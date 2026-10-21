@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
-import { MapPin, Clock, Tag, Search, SlidersHorizontal, Package, ArrowLeft, CheckCircle2, ShoppingBag, Store, ClipboardList, User as UserIcon, LogOut, Navigation, Menu, Heart, HelpCircle, Info, ShieldCheck, FileText } from 'lucide-react';
+import { MapPin, Clock, Tag, Search, SlidersHorizontal, Package, ArrowLeft, CheckCircle2, ShoppingBag, Store, ClipboardList, User as UserIcon, LogOut, Navigation, Menu, Heart, HelpCircle, Info, ShieldCheck, FileText, Utensils } from 'lucide-react';
 import { useListings, useNearbyListings } from '@/hooks/useData';
 import { supabase } from '@/lib/supabase';
 import { getSessionId } from '@/lib/session';
@@ -15,10 +15,11 @@ import { useAuth } from '@/lib/AuthContext';
 import { availabilityText } from '@/lib/utils';
 import NearbyPanel from '@/components/NearbyPanel';
 import PickupQr from '@/components/PickupQr';
-import { useNearbySettings, formatDistance, formatTimeLeft, mapUrl } from '@/lib/nearby';
+import { useNearbySettings, formatDistance, formatTimeLeft, mapUrl, RADIUS_OPTIONS } from '@/lib/nearby';
+import PhoneInput from '@/components/PhoneInput';
 import { useFavourites } from '@/hooks/useFavourites';
 import { HelpSupportPage, AboutPage, FoodSafetyPage, TermsPrivacyPage } from '@/components/InfoPages';
-import { cleanPhoneInput, isValidMobile, PHONE_ERROR } from '@/lib/validation';
+import { isValidMobile, PHONE_ERROR } from '@/lib/validation';
 
 type CustomerTab = 'marketplace' | 'reservations' | 'account' | 'favourites' | 'help' | 'about' | 'safety' | 'terms';
 
@@ -59,6 +60,15 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
       return true;
     });
   }, [listings, category, maxPrice, search]);
+
+  const activeFilterCount = (category !== 'all' ? 1 : 0) + (maxPrice ? 1 : 0);
+  const hasSearchOrFilters = activeFilterCount > 0 || search.trim() !== '';
+  const nextRadius = RADIUS_OPTIONS.find((r) => r > nearby.radiusKm);
+  const clearSearchAndFilters = () => {
+    setSearch('');
+    setCategory('all');
+    setMaxPrice('');
+  };
 
   const refreshListings = useCallback(() => {
     refetchListings();
@@ -108,17 +118,19 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
           </div>
         </div>
         {/* Tabs */}
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 flex gap-1 border-t border-ink-900/5">
-          <TabButton active={tab === 'marketplace'} onClick={() => setTab('marketplace')} icon={<Package size={16} />}>
+        <div className="max-w-6xl mx-auto px-2 sm:px-8 flex items-stretch border-t border-ink-900/5">
+          <TabButton active={tab === 'marketplace'} onClick={() => setTab('marketplace')} icon={<Package size={18} />}>
             Discover Food
           </TabButton>
-          <TabButton active={tab === 'reservations'} onClick={() => setTab('reservations')} icon={<ClipboardList size={16} />}>
+          <TabButton
+            active={tab === 'reservations'}
+            onClick={() => setTab('reservations')}
+            icon={<ClipboardList size={18} />}
+            badge={reservationCount}
+          >
             My Reservations
-            {reservationCount > 0 && (
-              <span className="ml-1.5 badge bg-orange-500 text-white px-1.5 py-0.5 text-[10px]">{reservationCount}</span>
-            )}
           </TabButton>
-                    <TabButton active={tab === 'account'} onClick={() => setTab('account')} icon={<UserIcon size={16} />}>
+          <TabButton active={tab === 'account'} onClick={() => setTab('account')} icon={<UserIcon size={18} />}>
             My Account
           </TabButton>
           <MoreMenu active={tab} onSelect={openPage} />
@@ -131,7 +143,7 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
       <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-6 pb-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-1">Discover Food</h1>
         <p className="text-ink-600 text-sm mb-5">
-          Browse surplus meals from local businesses and reserve yours for pickup.
+          Discover discounted surplus food from local businesses and reserve items for pickup.
         </p>
 
         <NearbyPanel nearby={nearby} />
@@ -140,8 +152,9 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
           <div className="relative flex-1">
             <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
             <input
-              type="text"
-              placeholder="Search meals, businesses…"
+              type="search"
+              aria-label="Search food or businesses"
+              placeholder="Search food or businesses…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="input-field pl-10"
@@ -149,9 +162,15 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
           </div>
           <button
             onClick={() => setShowFilters((v) => !v)}
+            aria-expanded={showFilters}
             className="btn-secondary sm:w-auto"
           >
             <SlidersHorizontal size={18} /> Filters
+            {activeFilterCount > 0 && (
+              <span className="ml-0.5 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-orange-500 px-1.5 text-[11px] font-bold text-white">
+                {activeFilterCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -220,29 +239,34 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
         )}
 
         {!loading && !error && filtered.length === 0 && (
-          <div className="text-center py-20">
-            <Package size={40} className="mx-auto text-ink-400 mb-3" />
-            <p className="text-ink-600 font-medium">
-              {nearby.active ? `No meals within ${nearby.radiusKm} km right now.` : 'No meals match your filters.'}
-            </p>
-            <p className="text-ink-400 text-sm mt-1">
-              {nearby.active
-                ? 'Try a larger search radius, or show all listings.'
-                : 'Try adjusting your search or clearing filters.'}
-            </p>
-          </div>
+          <EmptyListings
+            nearbyActive={nearby.active}
+            radiusKm={nearby.radiusKm}
+            nextRadius={nextRadius}
+            hasAnyListings={listings.length > 0}
+            hasSearchOrFilters={hasSearchOrFilters}
+            onExpand={() => nextRadius && nearby.setRadiusKm(nextRadius)}
+            onShowAll={nearby.showAll}
+            onClear={clearSearchAndFilters}
+          />
         )}
 
         {!loading && !error && filtered.length > 0 && (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map((listing) => (
-              <ListingCard
-                key={listing.id}
-                listing={listing}
-                onClick={() => setSelectedListing(listing)}
-              />
-            ))}
-          </div>
+          <>
+            <p className="text-sm text-ink-500 mb-4">
+              {filtered.length} food item{filtered.length !== 1 ? 's' : ''}
+              {nearby.active ? ` within ${nearby.radiusKm} km` : ' available'}
+            </p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filtered.map((listing) => (
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  onClick={() => setSelectedListing(listing)}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
          
@@ -346,12 +370,12 @@ function MoreMenu({ active, onSelect }: { active: CustomerTab; onSelect: (t: Cus
   }, [open]);
 
   return (
-    <div ref={ref} className="ml-auto relative flex items-center">
+    <div ref={ref} className="ml-auto relative flex items-center pl-1">
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="More options"
         aria-expanded={open}
-        className={`p-2.5 rounded-xl transition-colors ${
+        className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${
           isMenuPage || open ? 'bg-orange-100 text-orange-600' : 'text-ink-500 hover:bg-cream-200 hover:text-ink-900'
         }`}
       >
@@ -462,18 +486,41 @@ function FavouritesPage({
   );
 }
 
-function TabButton({ active, onClick, icon, children }: { active: boolean; onClick: () => void; icon: React.ReactNode; children: React.ReactNode; }) {
+function TabButton({
+  active,
+  onClick,
+  icon,
+  badge,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  badge?: number;
+  children: React.ReactNode;
+}) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border-b-2 transition-colors -mb-px ${
+      aria-current={active ? 'page' : undefined}
+      className={`flex min-h-[54px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 border-b-2 -mb-px px-1.5 py-2 text-center text-[11px] font-semibold leading-tight transition-colors sm:flex-none sm:flex-row sm:gap-2 sm:px-4 sm:py-3 sm:text-sm sm:leading-normal ${
         active
           ? 'border-orange-500 text-orange-600'
           : 'border-transparent text-ink-500 hover:text-ink-900'
       }`}
     >
-      {icon}
-      {children}
+      <span className="relative flex-shrink-0">
+        {icon}
+        {badge ? (
+          <span className="absolute -right-2.5 -top-1.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white sm:hidden">
+            {badge}
+          </span>
+        ) : null}
+      </span>
+      <span>{children}</span>
+      {badge ? (
+        <span className="hidden sm:inline-flex badge bg-orange-500 px-1.5 py-0.5 text-[10px] text-white">{badge}</span>
+      ) : null}
     </button>
   );
 }
@@ -483,13 +530,17 @@ function ListingCard({ listing, onClick }: { listing: Listing; onClick: () => vo
     ? Math.round((1 - listing.discounted_price / listing.original_price) * 100)
     : 0;
   const soldOut = listing.quantity_available <= 0;
+  const hasOriginalPrice = listing.original_price > listing.discounted_price;
+  const timeLeft = formatTimeLeft(listing.minutes_left);
 
   return (
     <button
       onClick={onClick}
-      className="card p-5 text-left hover:shadow-card-hover hover:border-orange-200 transition-all group"
+      className={`card flex h-full flex-col p-4 sm:p-5 text-left hover:shadow-card-hover hover:border-orange-200 transition-all group ${
+        soldOut ? 'opacity-75' : ''
+      }`}
     >
-            {listing.photo_url && (
+      {listing.photo_url && (
         <img
           src={listing.photo_url}
           alt={listing.meal_name}
@@ -506,7 +557,7 @@ function ListingCard({ listing, onClick }: { listing: Listing; onClick: () => vo
         ) : null}
       </div>
 
-      <h3 className="font-bold text-lg text-ink-900 mb-1 group-hover:text-orange-600 transition-colors">
+      <h3 className="font-bold text-lg leading-snug text-ink-900 mb-1 break-words group-hover:text-orange-600 transition-colors">
         {listing.meal_name}
       </h3>
       <p className="text-sm text-ink-600 leading-relaxed mb-3 line-clamp-2">
@@ -514,11 +565,11 @@ function ListingCard({ listing, onClick }: { listing: Listing; onClick: () => vo
       </p>
 
       <div className="space-y-1.5 text-sm text-ink-500 mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <Store size={15} className="text-ink-400 flex-shrink-0" />
-          <span>{listing.business?.name ?? 'Business'}</span>
+          <span className="truncate font-medium text-ink-700">{listing.business?.name ?? 'Business'}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <MapPin size={15} className="text-ink-400 flex-shrink-0" />
           <span className="truncate">{listing.business?.location ?? '—'}</span>
         </div>
@@ -528,34 +579,98 @@ function ListingCard({ listing, onClick }: { listing: Listing; onClick: () => vo
             <span className="font-semibold text-orange-600">{formatDistance(listing.distance_km)} away</span>
           </div>
         )}
-        <div className="flex items-center gap-2">
-          <Clock size={15} className="text-ink-400 flex-shrink-0" />
+        <div className="flex items-start gap-2">
+          <Clock size={15} className="text-ink-400 flex-shrink-0 mt-0.5" />
           <span>
             {availabilityText(listing)}
-            {formatTimeLeft(listing.minutes_left) ? ` · ${formatTimeLeft(listing.minutes_left)}` : ''}
+            {timeLeft ? ` · ${timeLeft}` : ''}
           </span>
         </div>
       </div>
 
-      <div className="flex items-end justify-between pt-3 border-t border-ink-900/5">
+      <div className="mt-auto flex items-end justify-between gap-3 pt-3 border-t border-ink-900/5">
         <div>
-          <div className="flex items-baseline gap-2">
+          <div className="flex flex-wrap items-baseline gap-x-2">
             <span className="text-2xl font-bold text-orange-500">
               ₹{listing.discounted_price.toFixed(2)}
             </span>
-            <span className="text-sm text-ink-400 line-through">
-              ₹{listing.original_price.toFixed(2)}
-            </span>
+            {hasOriginalPrice && (
+              <span className="text-sm text-ink-400 line-through">
+                ₹{listing.original_price.toFixed(2)}
+              </span>
+            )}
           </div>
           <p className="text-xs text-ink-500 mt-0.5">
             {soldOut ? 'Unavailable' : `${listing.quantity_available} item${listing.quantity_available !== 1 ? 's' : ''} left`}
           </p>
         </div>
-        <span className="text-orange-600 font-semibold text-sm group-hover:translate-x-1 transition-transform">
+        <span className="text-orange-600 font-semibold text-sm whitespace-nowrap group-hover:translate-x-1 transition-transform">
           View →
         </span>
       </div>
     </button>
+  );
+}
+
+// Shown when no food items can be listed for the current view
+function EmptyListings({
+  nearbyActive,
+  radiusKm,
+  nextRadius,
+  hasAnyListings,
+  hasSearchOrFilters,
+  onExpand,
+  onShowAll,
+  onClear,
+}: {
+  nearbyActive: boolean;
+  radiusKm: number;
+  nextRadius: number | undefined;
+  hasAnyListings: boolean;
+  hasSearchOrFilters: boolean;
+  onExpand: () => void;
+  onShowAll: () => void;
+  onClear: () => void;
+}) {
+  // Items exist, but the search or filters hide all of them
+  const hiddenByFilters = hasAnyListings && hasSearchOrFilters;
+
+  let title: string;
+  let text: string;
+  if (hiddenByFilters) {
+    title = 'No food items match your search';
+    text = 'Try a different search, or clear your filters to see everything available.';
+  } else if (nearbyActive) {
+    title = 'No food listings nearby yet';
+    text = 'Try expanding your search radius or view all available listings.';
+  } else {
+    title = 'No food listings available yet';
+    text = 'New items are added by local businesses throughout the day. Please check back soon.';
+  }
+
+  return (
+    <div className="card mx-auto max-w-xl px-6 py-10 text-center">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+        <Utensils size={26} />
+      </div>
+      <h2 className="text-lg font-bold text-ink-900">{title}</h2>
+      <p className="mx-auto mt-1.5 max-w-sm text-sm text-ink-600">{text}</p>
+
+      <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+        {hiddenByFilters ? (
+          <button onClick={onClear} className="btn-primary">Clear search &amp; filters</button>
+        ) : nearbyActive ? (
+          <>
+            {nextRadius ? (
+              <button onClick={onExpand} className="btn-primary">Expand to {nextRadius} km</button>
+            ) : (
+              <p className="self-center text-xs text-ink-500">You're already searching {radiusKm} km around you.</p>
+            )}
+            <button onClick={onShowAll} className="btn-secondary">Show all listings</button>
+          </>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -780,18 +895,7 @@ function ListingDetailModal({
             </div>
             <div>
               <label className="label-field">Phone Number</label>
-              <div className="flex items-center gap-2">
-                <span className="text-ink-600 font-medium">+91</span>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  maxLength={10}
-                  value={phone}
-                  onChange={(e) => setPhone(cleanPhoneInput(e.target.value))}
-                  placeholder="9876543210"
-                  className="input-field"
-                />
-              </div>
+              <PhoneInput value={phone} onChange={setPhone} />
               <p className="text-xs text-ink-400 mt-1">
                 10 digits, numbers only. The business may call you about your pickup. No SMS is sent in this demo.
               </p>
