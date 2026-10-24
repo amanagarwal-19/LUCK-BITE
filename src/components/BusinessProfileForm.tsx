@@ -147,7 +147,7 @@ export default function BusinessProfileForm({
       <div className="max-w-2xl mx-auto px-5 sm:px-8 py-8 sm:py-10">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-ink-900 flex items-center justify-center mx-auto mb-4 shadow-card">
-            <Store size={28} className="text-white" />
+            <Store size={28} className="text-cream-100" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-2">Register Your Business</h1>
           <p className="text-ink-600 text-sm">

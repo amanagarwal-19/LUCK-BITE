@@ -322,7 +322,7 @@ export function ListingFormModal({
                 <button
                   type="button"
                   onClick={removePhoto}
-                  className="absolute top-2 right-2 bg-white/90 rounded-full p-2 shadow-card hover:bg-white"
+                  className="absolute top-2 right-2 bg-cream-50/90 rounded-full p-2 shadow-card hover:bg-cream-50"
                   aria-label="Remove photo"
                 >
                   <X size={16} />
@@ -426,7 +426,7 @@ export function ListingCard({
       )}
       <div className="flex gap-2 flex-wrap mb-3">
         <Badge variant="orange">{listing.category}</Badge>
-        {discount > 0 && <Badge variant="green">-{discount}%</Badge>}
+        {discount > 0 && <Badge variant="orange">-{discount}%</Badge>}
         {archived && <Badge variant="neutral">Archived</Badge>}
         {soldOut && <Badge variant="error">Sold out</Badge>}
         {expired && <Badge variant="warning">Expired</Badge>}

@@ -45,7 +45,7 @@ export default function LandingPage({
               className="group card flex h-full flex-col p-6 sm:p-7 text-left hover:shadow-card-hover hover:border-orange-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 transition-all duration-300 animate-slide-up"
             >
               <div className="w-14 h-14 rounded-2xl bg-orange-500 flex items-center justify-center mb-5 shadow-warm group-hover:scale-110 transition-transform">
-                <ShoppingBag size={28} className="text-white" strokeWidth={2.2} />
+                <ShoppingBag size={28} className="text-cream-100" strokeWidth={2.2} />
               </div>
               <h2 className="text-xl font-bold text-ink-900 mb-2">I'm a Customer</h2>
               <p className="text-ink-600 text-sm leading-relaxed mb-4">
@@ -61,7 +61,7 @@ export default function LandingPage({
               className="group card flex h-full flex-col p-6 sm:p-7 text-left hover:shadow-card-hover hover:border-orange-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 transition-all duration-300 animate-slide-up"
             >
               <div className="w-14 h-14 rounded-2xl bg-ink-900 flex items-center justify-center mb-5 shadow-card group-hover:scale-110 transition-transform">
-                <Store size={28} className="text-white" strokeWidth={2.2} />
+                <Store size={28} className="text-cream-100" strokeWidth={2.2} />
               </div>
               <h2 className="text-xl font-bold text-ink-900 mb-2">I'm a Business</h2>
               <p className="text-ink-600 text-sm leading-relaxed mb-4">

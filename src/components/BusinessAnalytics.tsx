@@ -108,7 +108,7 @@ export default function BusinessAnalytics({ businessId }: { businessId: string }
               key={p.label}
               onClick={() => setDays(p.days)}
               className={`badge transition-all !px-3.5 !py-2 ${
-                days === p.days ? 'bg-orange-500 text-white' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'
+                days === p.days ? 'bg-orange-500 text-cream-100' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'
               }`}
             >
               {p.label}
@@ -148,7 +148,7 @@ export default function BusinessAnalytics({ businessId }: { businessId: string }
                 key={v}
                 onClick={() => setView(v)}
                 className={`badge capitalize transition-all !px-3.5 !py-2 ${
-                  view === v ? 'bg-orange-500 text-white' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'
+                  view === v ? 'bg-orange-500 text-cream-100' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'
                 }`}
               >
                 {v}
@@ -172,9 +172,9 @@ export default function BusinessAnalytics({ businessId }: { businessId: string }
                   values: [p.listed, p.reserved, p.collected],
                 }))}
                 series={[
-                  { name: 'Listed', color: '#d6d3d1' },
-                  { name: 'Reserved', color: '#fdba74' },
-                  { name: 'Collected', color: '#f97316' },
+                  { name: 'Listed', color: '#C6D6C3' },
+                  { name: 'Reserved', color: '#F5C66B' },
+                  { name: 'Collected', color: '#173D2A' },
                 ]}
                 format={(n) => String(n)}
               />
@@ -187,7 +187,7 @@ export default function BusinessAnalytics({ businessId }: { businessId: string }
                   tooltip: `${longLabelOf(p)}: ${inr(p.revenue)}`,
                   values: [p.revenue],
                 }))}
-                series={[{ name: 'Revenue recovered', color: '#16a34a' }]}
+                series={[{ name: 'Revenue recovered', color: '#2F6B4A' }]}
                 format={inr}
               />
             </div>

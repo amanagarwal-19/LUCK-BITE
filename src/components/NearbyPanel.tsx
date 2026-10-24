@@ -17,7 +17,7 @@ export default function NearbyPanel({ nearby }: { nearby: NearbySettings }) {
       <div className="card p-4 sm:p-5 mb-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-start gap-3 flex-1 min-w-0">
-            <div className="w-11 h-11 rounded-xl bg-orange-500 flex items-center justify-center text-white shadow-warm flex-shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-orange-500 flex items-center justify-center text-cream-100 shadow-warm flex-shrink-0">
               <Navigation size={22} />
             </div>
             <div className="min-w-0">
@@ -92,8 +92,8 @@ export default function NearbyPanel({ nearby }: { nearby: NearbySettings }) {
                   onClick={() => nearby.setRadiusKm(r)}
                   className={`min-h-[40px] min-w-[56px] px-3.5 rounded-lg text-sm font-semibold transition-all ${
                     selected
-                      ? 'bg-orange-500 text-white shadow-sm'
-                      : 'text-ink-600 hover:bg-white hover:text-ink-900'
+                      ? 'bg-orange-500 text-cream-100 shadow-sm'
+                      : 'text-ink-600 hover:bg-cream-50 hover:text-ink-900'
                   }`}
                 >
                   {r} km

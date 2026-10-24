@@ -456,7 +456,7 @@ export function TermsPrivacyPage({ initial = 'terms' }: { initial?: 'terms' | 'p
             key={t}
             onClick={() => setWhich(t)}
             className={`badge transition-all ${
-              which === t ? 'bg-orange-500 text-white' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'
+              which === t ? 'bg-orange-500 text-cream-100' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'
             }`}
           >
             {t === 'terms' ? 'Terms of Use' : 'Privacy Policy'}
