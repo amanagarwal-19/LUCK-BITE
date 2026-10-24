@@ -12,7 +12,7 @@ import MyReservations from '@/components/MyReservations';
 import AuthModal from '@/components/AuthModal';
 import AccountPage from '@/components/AccountPage';
 import { useAuth } from '@/lib/AuthContext';
-import { availabilityText } from '@/lib/utils';
+import { availabilityText, isListingAvailable } from '@/lib/utils';
 import NearbyPanel from '@/components/NearbyPanel';
 import PickupQr from '@/components/PickupQr';
 import { useNearbySettings, formatDistance, formatTimeLeft, mapUrl, RADIUS_OPTIONS } from '@/lib/nearby';
@@ -27,7 +27,20 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
   const nearby = useNearbySettings();
   const allListings = useListings();
   const nearbyListings = useNearbyListings(nearby.active ? nearby.coords : null, nearby.radiusKm, nearby.sortBy);
-  const { listings, loading, error, refetch: refetchListings } = nearby.active ? nearbyListings : allListings;
+  const { listings: sourceListings, loading, error } = nearby.active ? nearbyListings : allListings;
+
+  // Re-check every 30 seconds, so items that sell out or expire disappear without a page reload
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNowMs(Date.now()), 30000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Customers only ever see items they can still reserve (the database applies the same rule)
+  const listings = useMemo(
+    () => sourceListings.filter((l) => isListingAvailable(l, nowMs)),
+    [sourceListings, nowMs]
+  );
   const [tab, setTab] = useState<CustomerTab>('marketplace');
   const [category, setCategory] = useState<string>('all');
   const [maxPrice, setMaxPrice] = useState<string>('');
@@ -70,9 +83,26 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
     setMaxPrice('');
   };
 
+  // Refresh the lists quietly in the background
+  const refetchAll = allListings.refetch;
+  const refetchNearby = nearbyListings.refetch;
   const refreshListings = useCallback(() => {
-    refetchListings();
-  }, [refetchListings]);
+    refetchAll({ silent: true });
+    if (nearby.active) refetchNearby({ silent: true });
+  }, [refetchAll, refetchNearby, nearby.active]);
+
+  // Keep Discover Food fresh: every minute, and whenever the person comes back to this tab
+  useEffect(() => {
+    const id = window.setInterval(refreshListings, 60000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refreshListings();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [refreshListings]);
 
   const handleReservationComplete = () => {
     setReservationCount((c) => c + 1);
@@ -283,6 +313,12 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
           setAuthOpen(true);
         }}
         isFavourite={selectedListing ? favs.isFavourite(selectedListing.business_id) : false}
+        unavailable={
+          !!selectedListing &&
+          !allListings.loading &&
+          !allListings.listings.some((l) => l.id === selectedListing.id && isListingAvailable(l, nowMs))
+        }
+        onStale={refreshListings}
         onToggleFavourite={() => {
           if (!selectedListing) return;
           if (!user) {
@@ -308,7 +344,7 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
           <FavouritesPage
             signedIn={!!user}
             favs={favs}
-            listings={allListings.listings}
+            listings={allListings.listings.filter((l) => isListingAvailable(l, nowMs))}
             onOpenListing={setSelectedListing}
             onSignInClick={() => setAuthOpen(true)}
           />
@@ -681,6 +717,8 @@ function ListingDetailModal({
   onRequireLogin,
   isFavourite,
   onToggleFavourite,
+  unavailable = false,
+  onStale,
 }: {
   listing: Listing | null;
   onClose: () => void;
@@ -688,6 +726,9 @@ function ListingDetailModal({
   onRequireLogin: () => void;
   isFavourite: boolean;
   onToggleFavourite: () => void;
+  // True when the list no longer contains this item (sold out, archived or expired)
+  unavailable?: boolean;
+  onStale?: () => void;
 }) {
   const { user } = useAuth();
   const [profilePhone, setProfilePhone] = useState('');
@@ -760,6 +801,8 @@ function ListingDetailModal({
     if (error || !data) {
       setSubmitError(error?.message || 'Something went wrong creating your reservation. Please try again.');
       setSubmitting(false);
+      // The item may have sold out or expired while this page was open: refresh the list
+      onStale?.();
       return;
     }
 
@@ -859,12 +902,17 @@ function ListingDetailModal({
               setStep('form');
               setSubmitError(null);
             }}
-            disabled={soldOut}
+            disabled={soldOut || unavailable}
             className="btn-primary w-full"
           >
             <ShoppingBag size={20} />
-            {soldOut ? 'Sold Out' : user ? 'Reserve This Item' : 'Sign in to reserve'}
+            {soldOut ? 'Sold Out' : unavailable ? 'No longer available' : user ? 'Reserve This Item' : 'Sign in to reserve'}
           </button>
+          {unavailable && !soldOut && (
+            <p className="mt-3 rounded-xl bg-warning-100/60 border border-warning-500/20 px-3.5 py-2.5 text-center text-sm text-warning-700">
+              This item is no longer available. It may have sold out or its pickup time has passed.
+            </p>
+          )}
           <p className="text-center text-xs text-ink-400 mt-3">
             Demo only — no real payment or phone verification will occur.
           </p>

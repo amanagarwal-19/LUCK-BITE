@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, Package, Clock, Tag, AlertTriangle, ImagePlus, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, Package, Clock, Tag, AlertTriangle, ImagePlus, X, Archive, ArchiveRestore, RefreshCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { MEAL_CATEGORIES } from '@/types';
 import type { Listing } from '@/types';
@@ -389,19 +389,33 @@ export function ListingCard({
   onEdit,
   onToggle,
   onDelete,
+  onArchive,
+  onRestore,
+  onRelist,
+  canDelete = true,
+  archived = false,
 }: {
   listing: Listing;
   onEdit: () => void;
   onToggle: () => void;
   onDelete: () => void;
+  onArchive?: () => void;
+  onRestore?: () => void;
+  onRelist?: () => void;
+  // False when the item already has reservations (those can never be deleted, only archived)
+  canDelete?: boolean;
+  archived?: boolean;
 }) {
   const discount = listing.original_price > 0
     ? Math.round((1 - listing.discounted_price / listing.original_price) * 100)
     : 0;
   const hasOriginalPrice = listing.original_price > listing.discounted_price;
+  const soldOut = listing.quantity_available <= 0;
+  const expired = !archived && !!listing.expires_at && new Date(listing.expires_at).getTime() <= Date.now();
+  const needsAttention = !archived && listing.is_active && (soldOut || expired);
 
   return (
-    <div className={`card flex h-full flex-col p-4 sm:p-5 ${!listing.is_active ? 'opacity-60' : ''}`}>
+    <div className={`card flex h-full flex-col p-4 sm:p-5 ${archived || !listing.is_active ? 'opacity-70' : ''}`}>
       {listing.photo_url && (
         <img
           src={listing.photo_url}
@@ -413,8 +427,10 @@ export function ListingCard({
       <div className="flex gap-2 flex-wrap mb-3">
         <Badge variant="orange">{listing.category}</Badge>
         {discount > 0 && <Badge variant="green">-{discount}%</Badge>}
-        {listing.quantity_available <= 0 && <Badge variant="error">Sold out</Badge>}
-        {!listing.is_active && <Badge variant="neutral">Hidden</Badge>}
+        {archived && <Badge variant="neutral">Archived</Badge>}
+        {soldOut && <Badge variant="error">Sold out</Badge>}
+        {expired && <Badge variant="warning">Expired</Badge>}
+        {!archived && !listing.is_active && <Badge variant="neutral">Hidden</Badge>}
       </div>
 
       <h3 className="font-bold text-lg leading-snug text-ink-900 mb-1 break-words">{listing.meal_name}</h3>
@@ -444,16 +460,54 @@ export function ListingCard({
         )}
       </div>
 
-      <div className="mt-auto flex items-center gap-1 pt-3 border-t border-ink-900/5">
-        <button onClick={onEdit} className="btn-ghost text-sm min-h-[40px]">
-          <Pencil size={15} /> Edit
-        </button>
-        <button onClick={onToggle} className="btn-ghost text-sm min-h-[40px]">
-          {listing.is_active ? <><EyeOff size={15} /> Hide</> : <><Eye size={15} /> Show</>}
-        </button>
-        <button onClick={onDelete} className="btn-ghost text-sm min-h-[40px] text-error-700 hover:bg-error-100 ml-auto">
-          <Trash2 size={15} /> Delete
-        </button>
+      {needsAttention && (
+        <p className="mb-3 rounded-lg bg-warning-100/60 border border-warning-500/20 px-3 py-2 text-xs text-warning-700">
+          {soldOut
+            ? 'Sold out, so customers no longer see this item. Archive it to tidy your list.'
+            : 'The pickup time has passed, so customers no longer see this item. Relist it or archive it.'}
+        </p>
+      )}
+
+      <div className="mt-auto flex flex-wrap items-center gap-1 pt-3 border-t border-ink-900/5">
+        {archived ? (
+          <>
+            <p className="text-xs text-ink-400 mr-auto">
+              Hidden from customers. Reservations and orders are kept.
+            </p>
+            {onRestore && (
+              <button onClick={onRestore} className="btn-ghost text-sm min-h-[40px]">
+                <ArchiveRestore size={15} /> Restore
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            <button onClick={onEdit} className="btn-ghost text-sm min-h-[40px]">
+              <Pencil size={15} /> Edit
+            </button>
+            <button onClick={onToggle} className="btn-ghost text-sm min-h-[40px]">
+              {listing.is_active ? <><EyeOff size={15} /> Hide</> : <><Eye size={15} /> Show</>}
+            </button>
+            {expired && onRelist && (
+              <button onClick={onRelist} className="btn-ghost text-sm min-h-[40px] text-orange-600">
+                <RefreshCw size={15} /> Relist
+              </button>
+            )}
+            {onArchive && (
+              <button
+                onClick={onArchive}
+                className={`btn-ghost text-sm min-h-[40px] ${needsAttention ? 'text-orange-600' : ''}`}
+              >
+                <Archive size={15} /> Archive
+              </button>
+            )}
+            {canDelete && (
+              <button onClick={onDelete} className="btn-ghost text-sm min-h-[40px] text-error-700 hover:bg-error-100 ml-auto">
+                <Trash2 size={15} /> Delete
+              </button>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

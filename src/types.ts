@@ -39,6 +39,10 @@ export interface Listing {
   allergen_info: string;
   is_active: boolean;
   created_at: string;
+  // Set when a business archives an item; archived items are never shown to customers
+  archived_at?: string | null;
+  // The moment the item's "available till" time passes
+  expires_at?: string | null;
   business?: PublicBusiness;
   // Only present in "near me" results
   distance_km?: number;
