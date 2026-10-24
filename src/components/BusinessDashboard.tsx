@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Modal from '@/components/Modal';
 import LocationPicker from '@/components/LocationPicker';
 import type { PickedLocation } from '@/components/LocationPicker';
-import { ArrowLeft, Plus, Package, ClipboardList, Store, MapPin, Mail, Phone, Clock, Tag, LogOut, BarChart3, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Plus, Package, ClipboardList, Store, MapPin, Mail, Phone, Clock, Tag, LogOut, BarChart3, ShieldCheck, Archive, ChevronDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useBusinessListings, useBusinessReservations } from '@/hooks/useData';
 import { useAuth } from '@/lib/AuthContext';
@@ -12,6 +12,7 @@ import Logo from '@/components/Logo';
 import { ListingFormModal, ListingCard } from '@/components/ListingForms';
 import ReservationManagement from '@/components/ReservationManagement';
 import BusinessAnalytics from '@/components/BusinessAnalytics';
+import { isListingAvailable } from '@/lib/utils';
 
 type Tab = 'listings' | 'reservations' | 'analytics';
 
@@ -28,6 +29,7 @@ export default function BusinessDashboard({
   const { signOut } = useAuth();
   const [tab, setTab] = useState<Tab>('listings');
   const [showForm, setShowForm] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [editing, setEditing] = useState<Listing | null>(null);
   const { listings, loading, refetch: refetchListings } = useBusinessListings(business.id);
   const { reservations, refetch: refetchReservations } = useBusinessReservations(business.id);
@@ -54,7 +56,31 @@ export default function BusinessDashboard({
     refetchListings();
   };
 
-  const activeListings = listings.filter((l) => l.is_active).length;
+  // Archived items leave the active list but stay in the system (with their reservations and orders)
+  const currentListings = listings.filter((l) => !l.archived_at);
+  const archivedListings = listings.filter((l) => l.archived_at);
+  const idsWithReservations = new Set(reservations.map((r) => r.listing_id));
+  // "Active" = what customers can see right now
+  const activeListings = currentListings.filter((l) => isListingAvailable(l)).length;
+
+  const runListingAction = async (l: Listing, action: 'archive' | 'restore' | 'relist') => {
+    const { error } = await supabase.rpc('manage_listing', { p_listing_id: l.id, p_action: action });
+    if (error) {
+      alert(error.message || 'Could not update this listing. Your business may not be verified or you may not have permission.');
+      return;
+    }
+    refetchListings();
+  };
+
+  const handleArchive = (l: Listing) => {
+    if (
+      !confirm(
+        `Archive "${l.meal_name}"?\n\nIt will be removed from your active listings and from Discover Food. Its reservations and collected orders stay available in the Reservations tab.`
+      )
+    )
+      return;
+    runListingAction(l, 'archive');
+  };
   const pendingReservations = reservations.filter((r) => r.status === 'pending').length;
 
   return (
@@ -156,28 +182,69 @@ export default function BusinessDashboard({
               <div className="text-center py-16">
                 <div className="inline-block w-8 h-8 border-3 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
               </div>
-            ) : listings.length === 0 ? (
+            ) : currentListings.length === 0 ? (
               <div className="card p-8 text-center">
                 <Package size={36} className="mx-auto text-ink-400 mb-3" />
-                <p className="text-ink-600 font-medium">No listings yet.</p>
+                <p className="text-ink-600 font-medium">
+                  {archivedListings.length > 0 ? 'No active listings.' : 'No listings yet.'}
+                </p>
                 <p className="text-ink-400 text-sm mt-1 mb-4">
-                  Add your first food item to start selling.
+                  {archivedListings.length > 0
+                    ? 'Add a new item, or restore one from your archive below.'
+                    : 'Add your first food item to start selling.'}
                 </p>
                 <button onClick={openAdd} className="btn-primary">
-                  <Plus size={18} /> Add Your First Listing
+                  <Plus size={18} /> {archivedListings.length > 0 ? 'Add a Listing' : 'Add Your First Listing'}
                 </button>
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-4">
-                {listings.map((l) => (
+                {currentListings.map((l) => (
                   <ListingCard
                     key={l.id}
                     listing={l}
                     onEdit={() => openEdit(l)}
                     onToggle={() => handleToggleActive(l)}
                     onDelete={() => handleDelete(l)}
+                    onArchive={() => handleArchive(l)}
+                    onRelist={() => runListingAction(l, 'relist')}
+                    canDelete={!idsWithReservations.has(l.id)}
                   />
                 ))}
+              </div>
+            )}
+
+            {archivedListings.length > 0 && (
+              <div className="mt-8">
+                <button
+                  onClick={() => setShowArchived((v) => !v)}
+                  aria-expanded={showArchived}
+                  className="flex items-center gap-2 text-sm font-semibold text-ink-700 hover:text-ink-900 min-h-[40px]"
+                >
+                  <Archive size={16} /> Archived ({archivedListings.length})
+                  <ChevronDown size={16} className={`transition-transform ${showArchived ? 'rotate-180' : ''}`} />
+                </button>
+                {showArchived && (
+                  <>
+                    <p className="text-xs text-ink-500 mt-1 mb-4">
+                      Archived items are hidden from customers. Their reservations and collected orders stay in the
+                      Reservations tab and in your performance numbers.
+                    </p>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {archivedListings.map((l) => (
+                        <ListingCard
+                          key={l.id}
+                          listing={l}
+                          archived
+                          onEdit={() => openEdit(l)}
+                          onToggle={() => handleToggleActive(l)}
+                          onDelete={() => handleDelete(l)}
+                          onRestore={() => runListingAction(l, 'restore')}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>

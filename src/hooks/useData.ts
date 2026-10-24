@@ -10,8 +10,9 @@ export function useListings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchListings = useCallback(async () => {
-    setLoading(true);
+  // silent: refresh in the background without showing the loading spinner
+  const fetchListings = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     setError(null);
     const { data, error } = await supabase
       .from('listings')
@@ -78,13 +79,13 @@ export function useNearbyListings(
   const lat = coords?.lat ?? null;
   const lng = coords?.lng ?? null;
 
-  const fetchListings = useCallback(async () => {
+  const fetchListings = useCallback(async (opts?: { silent?: boolean }) => {
     if (lat === null || lng === null) {
       setListings([]);
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (!opts?.silent) setLoading(true);
     setError(null);
     const { data, error } = await supabase.rpc('nearby_listings', {
       p_lat: lat,
