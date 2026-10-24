@@ -107,7 +107,7 @@ export default function BusinessAnalytics({ businessId }: { businessId: string }
             <button
               key={p.label}
               onClick={() => setDays(p.days)}
-              className={`badge transition-all ${
+              className={`badge transition-all !px-3.5 !py-2 ${
                 days === p.days ? 'bg-orange-500 text-white' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'
               }`}
             >
@@ -147,7 +147,7 @@ export default function BusinessAnalytics({ businessId }: { businessId: string }
               <button
                 key={v}
                 onClick={() => setView(v)}
-                className={`badge capitalize transition-all ${
+                className={`badge capitalize transition-all !px-3.5 !py-2 ${
                   view === v ? 'bg-orange-500 text-white' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'
                 }`}
               >

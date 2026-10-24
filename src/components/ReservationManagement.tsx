@@ -142,7 +142,7 @@ export default function ReservationManagement({
       </div>
 
       {/* Confirm a pickup */}
-      <div ref={panelRef} className="card p-5 mb-6">
+      <div ref={panelRef} className="card p-4 sm:p-5 mb-6">
         <h3 className="font-bold text-ink-900 mb-1">Confirm a pickup</h3>
         <p className="text-sm text-ink-600 mb-4">
           Scan the customer's QR code, or type the pickup code they show you.
@@ -244,7 +244,7 @@ export default function ReservationManagement({
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`badge capitalize transition-all ${filter === f ? 'bg-orange-500 text-white' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'}`}
+              className={`badge capitalize transition-all !px-3.5 !py-2 ${filter === f ? 'bg-orange-500 text-white' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'}`}
             >
               {f}
             </button>
@@ -267,9 +267,9 @@ export default function ReservationManagement({
             const Icon = cfg.icon;
             return (
               <div key={r.id} className="card p-4 sm:p-5">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-x-2.5 gap-y-1 mb-2 flex-wrap">
                       <Badge variant={cfg.variant}>
                         <Icon size={13} /> {cfg.label}
                       </Badge>
@@ -280,23 +280,29 @@ export default function ReservationManagement({
                         <span className="text-xs text-green-600">Collected {timeOf(r.collected_at)}</span>
                       )}
                     </div>
-                    <p className="font-semibold text-ink-900">
+                    <p className="font-semibold text-ink-900 break-words">
                       {r.listing?.meal_name ?? 'Unknown meal'}
                     </p>
-                    <div className="text-sm text-ink-500 mt-1 space-y-0.5">
-                      <p>{r.customer_name} · {r.customer_phone}</p>
-                      <p>Qty: {r.quantity} · Pickup: {r.listing ? availabilityText(r.listing) : '—'}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-500">
+                      <span>{r.customer_name}</span>
+                      <a href={`tel:${r.customer_phone}`} className="text-orange-600 hover:underline">
+                        {r.customer_phone}
+                      </a>
                     </div>
+                    <p className="mt-1 text-sm text-ink-500">
+                      Qty: {r.quantity}
+                      {r.status === 'pending' && r.listing ? ` · ${availabilityText(r.listing)}` : ''}
+                    </p>
                   </div>
 
                   {r.status === 'pending' && (
-                    <div className="flex gap-2">
-                      <button onClick={focusPickupPanel} className="btn-secondary text-sm py-2 px-3">
+                    <div className="flex gap-2 sm:flex-shrink-0">
+                      <button onClick={focusPickupPanel} className="btn-secondary text-sm py-2 px-3 min-h-[40px] flex-1 sm:flex-none">
                         <QrCode size={15} /> Verify pickup
                       </button>
                       <button
                         onClick={() => handleCancel(r)}
-                        className="btn-ghost text-sm text-error-700 hover:bg-error-100"
+                        className="btn-ghost text-sm min-h-[40px] text-error-700 hover:bg-error-100"
                       >
                         Cancel
                       </button>

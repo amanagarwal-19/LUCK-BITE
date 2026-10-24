@@ -236,7 +236,7 @@ export default function LocationPicker({
 
       <div
         ref={mapDivRef}
-        className="relative z-0 w-full h-72 rounded-xl border border-ink-900/10 bg-cream-200 overflow-hidden"
+        className="relative z-0 w-full h-64 sm:h-72 rounded-xl border border-ink-900/10 bg-cream-200 overflow-hidden"
       />
 
       <div className="flex flex-wrap items-center gap-3">

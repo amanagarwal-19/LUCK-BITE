@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/AuthContext';
 import { BUSINESS_TYPES } from '@/types';
 import LocationPicker from '@/components/LocationPicker';
+import PhoneInput from '@/components/PhoneInput';
 import type { PickedLocation } from '@/components/LocationPicker';
 import Logo from '@/components/Logo';
 
@@ -143,7 +144,7 @@ export default function BusinessProfileForm({
     <div className="min-h-screen bg-cream-100">
       <Header onBack={onBack} />
 
-      <div className="max-w-xl mx-auto px-5 sm:px-8 py-10">
+      <div className="max-w-2xl mx-auto px-5 sm:px-8 py-8 sm:py-10">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-ink-900 flex items-center justify-center mx-auto mb-4 shadow-card">
             <Store size={28} className="text-white" />
@@ -155,84 +156,83 @@ export default function BusinessProfileForm({
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="card p-6 space-y-5">
-          <Field icon={<Building2 size={18} />} label="Business Name" required>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Sunrise Bakehouse"
-              className="input-field"
-              required
-            />
-          </Field>
-
-          <Field icon={<User size={18} />} label="Contact Name" required>
-            <input
-              type="text"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-              placeholder="Mara Costa"
-              className="input-field"
-              required
-            />
-          </Field>
-
-          <Field icon={<Tag size={18} />} label="Business Type">
-            <select
-              value={businessType}
-              onChange={(e) => setBusinessType(e.target.value)}
-              className="input-field"
-            >
-              {BUSINESS_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </Field>
-
-          <Field icon={<MapPin size={18} />} label="Business Location" required>
-            <LocationPicker
-              value={picked}
-              onChange={(v) => {
-                setPicked(v);
-                if (!name.trim() && v.name) setName(v.name);
-              }}
-            />
-          </Field>
-
-          <div className="grid sm:grid-cols-2 gap-5">
-            <Field icon={<Mail size={18} />} label="Business Email" required>
+        <form onSubmit={handleSubmit} className="card p-5 sm:p-6 space-y-7">
+          <section className="space-y-5">
+            <SectionTitle step={1}>Business details</SectionTitle>
+            <Field icon={<Building2 size={18} />} label="Business Name" required>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="mara@sunrisebake.co"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Sunrise Bakehouse"
                 className="input-field"
                 required
               />
             </Field>
 
-            <Field icon={<Phone size={18} />} label="Mobile Number" required>
-              <div className="flex items-center gap-2">
-                <span className="text-ink-600 font-medium">+91</span>
+            <div className="grid sm:grid-cols-2 gap-5">
+              <Field icon={<User size={18} />} label="Contact Name" required>
                 <input
-                  type="tel"
-                  inputMode="numeric"
-                  maxLength={10}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="9876543210"
+                  type="text"
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  placeholder="Mara Costa"
                   className="input-field"
                   required
                 />
-              </div>
-              <p className="text-xs text-ink-400 mt-1">10 digits, numbers only</p>
-            </Field>
-          </div>
+              </Field>
 
-          <div className="border-t border-ink-900/5 pt-5">
-            <h2 className="font-bold text-ink-900 mb-1">Verification (optional)</h2>
-            <p className="text-xs text-ink-500 mb-4">
+              <Field icon={<Tag size={18} />} label="Business Type">
+                <select
+                  value={businessType}
+                  onChange={(e) => setBusinessType(e.target.value)}
+                  className="input-field"
+                >
+                  {BUSINESS_TYPES.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          </section>
+
+          <section className="space-y-5 pt-6 border-t border-ink-900/5">
+            <SectionTitle step={2}>Location</SectionTitle>
+            <Field icon={<MapPin size={18} />} label="Business Location" required>
+              <LocationPicker
+                value={picked}
+                onChange={(v) => {
+                  setPicked(v);
+                  if (!name.trim() && v.name) setName(v.name);
+                }}
+              />
+            </Field>
+          </section>
+
+          <section className="space-y-5 pt-6 border-t border-ink-900/5">
+            <SectionTitle step={3}>Contact details</SectionTitle>
+            <div className="grid sm:grid-cols-2 gap-5">
+              <Field icon={<Mail size={18} />} label="Business Email" required>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="mara@sunrisebake.co"
+                  className="input-field"
+                  required
+                />
+              </Field>
+
+              <Field icon={<Phone size={18} />} label="Mobile Number" required>
+                <PhoneInput value={phone} onChange={setPhone} />
+                <p className="text-xs text-ink-400 mt-1.5">10 digits, numbers only</p>
+              </Field>
+            </div>
+          </section>
+
+          <section className="pt-6 border-t border-ink-900/5">
+            <SectionTitle step={4}>Verification <span className="font-normal text-ink-400">(optional)</span></SectionTitle>
+            <p className="text-xs text-ink-500 mt-1 mb-5">
               Only the administrator can see these. Adding your FSSAI details helps us verify your business faster.
             </p>
 
@@ -277,7 +277,7 @@ export default function BusinessProfileForm({
                 className="hidden"
               />
             </div>
-          </div>
+          </section>
 
           {error && (
             <div className="rounded-xl bg-error-100 border border-error-500/20 p-3">
@@ -285,9 +285,14 @@ export default function BusinessProfileForm({
             </div>
           )}
 
-          <button type="submit" disabled={submitting} className="btn-primary w-full">
-            {submitting ? 'Submitting…' : 'Submit for Verification'}
-          </button>
+          <div>
+            <button type="submit" disabled={submitting} className="btn-primary w-full">
+              {submitting ? 'Submitting…' : 'Submit for Verification'}
+            </button>
+            <p className="text-center text-xs text-ink-400 mt-3">
+              Your business starts as "Pending verification" until an administrator reviews it.
+            </p>
+          </div>
         </form>
       </div>
     </div>
@@ -330,5 +335,16 @@ function Field({
       </label>
       {children}
     </div>
+  );
+}
+
+function SectionTitle({ step, children }: { step: number; children: React.ReactNode }) {
+  return (
+    <h2 className="flex items-center gap-2.5 font-bold text-ink-900">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-700">
+        {step}
+      </span>
+      <span>{children}</span>
+    </h2>
   );
 }

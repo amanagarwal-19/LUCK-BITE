@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Store, ChevronRight, Plus, LogOut, ShieldCheck, Clock, XCircle, Ban, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Store, ChevronRight, Plus, LogOut, ShieldCheck, Clock, XCircle, Ban, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { useMyBusinesses } from '@/hooks/useData';
 import type { Business, BusinessStatus } from '@/types';
@@ -75,28 +75,42 @@ export default function BusinessSection({ onBack }: { onBack: () => void }) {
     return (
       <div className="min-h-screen bg-cream-100">
         <PortalHeader onBack={onBack} />
-        <div className="max-w-md mx-auto px-5 sm:px-8 py-12 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-ink-900 flex items-center justify-center mx-auto mb-4 shadow-card">
-            <Store size={28} className="text-white" />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-2">Business Portal</h1>
-          <p className="text-ink-600 text-sm mb-6">
-            Sign in to manage your listings, or create a business account to register your business. New
-            businesses are verified before they can list food.
-          </p>
-          <div className="space-y-3">
-            <button
-              onClick={() => { setAuthMode('signin'); setAuthOpen(true); }}
-              className="btn-primary w-full"
-            >
-              Sign in as Business
-            </button>
-            <button
-              onClick={() => { setAuthMode('signup'); setAuthOpen(true); }}
-              className="btn-secondary w-full"
-            >
-              Create a business account
-            </button>
+        <div className="max-w-md mx-auto px-5 sm:px-8 py-10 sm:py-14">
+          <div className="card p-6 sm:p-8 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-ink-900 flex items-center justify-center mx-auto mb-4 shadow-card">
+              <Store size={28} className="text-white" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-2">Business Portal</h1>
+            <p className="text-ink-600 text-sm mb-6">
+              Sign in to manage your listings, or create a business account to register your business. New
+              businesses are verified before they can list food.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => { setAuthMode('signin'); setAuthOpen(true); }}
+                className="btn-primary w-full"
+              >
+                Sign in as Business
+              </button>
+              <button
+                onClick={() => { setAuthMode('signup'); setAuthOpen(true); }}
+                className="btn-secondary w-full"
+              >
+                Create a business account
+              </button>
+            </div>
+            <ul className="mt-6 pt-5 border-t border-ink-900/5 space-y-2.5 text-left text-sm text-ink-600">
+              {[
+                'List your surplus food at a lower price',
+                'Confirm pickups with QR codes or pickup codes',
+                'Track the revenue and food you recover',
+              ].map((point) => (
+                <li key={point} className="flex items-start gap-2.5">
+                  <CheckCircle2 size={17} className="text-orange-500 flex-shrink-0 mt-0.5" />
+                  {point}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} initialMode={authMode} role="business" />
@@ -110,7 +124,7 @@ export default function BusinessSection({ onBack }: { onBack: () => void }) {
       <div className="min-h-screen bg-cream-100">
         <PortalHeader onBack={onBack} />
         <div className="max-w-md mx-auto px-5 sm:px-8 py-16 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-4 shadow-card">
+          <div className="w-14 h-14 rounded-2xl bg-warning-100 text-warning-700 flex items-center justify-center mx-auto mb-4 shadow-card">
             <AlertTriangle size={28} />
           </div>
           <h1 className="text-2xl font-bold text-ink-900 mb-2">Customer Account Detected</h1>
@@ -172,7 +186,7 @@ export default function BusinessSection({ onBack }: { onBack: () => void }) {
         }
       />
 
-      <div className="max-w-2xl mx-auto px-5 sm:px-8 py-10">
+      <div className="max-w-2xl mx-auto px-5 sm:px-8 py-8 sm:py-10">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-ink-900 flex items-center justify-center mx-auto mb-4 shadow-card">
             <Store size={28} className="text-white" />
@@ -240,12 +254,12 @@ export default function BusinessSection({ onBack }: { onBack: () => void }) {
                 <button
                   key={biz.id}
                   onClick={() => setSelectedId(biz.id)}
-                  className="card p-4 w-full flex items-center gap-4 text-left hover:shadow-card-hover hover:border-orange-200 transition-all"
+                  className="card p-4 sm:p-5 w-full flex items-center gap-4 text-left hover:shadow-card-hover hover:border-orange-200 transition-all"
                 >
                   {content}
                 </button>
               ) : (
-                <div key={biz.id} className="card p-4 w-full flex items-start gap-4 text-left">
+                <div key={biz.id} className="card p-4 sm:p-5 w-full flex items-start gap-4 text-left">
                   {content}
                 </div>
               );
