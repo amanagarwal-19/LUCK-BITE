@@ -40,7 +40,7 @@ $$;
 -- New items get an expiry. It is worked out again when the "available till" time changes
 -- or when a hidden item is shown again.
 CREATE OR REPLACE FUNCTION public.set_listing_expiry() RETURNS trigger
-LANGUAGE plpgsql AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     NEW.expires_at := public.next_listing_expiry(NEW.available_until, now());

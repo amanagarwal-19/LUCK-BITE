@@ -6,39 +6,11 @@ import type { Listing } from '@/types';
 import { Badge } from '@/components/Badge';
 import Modal from '@/components/Modal';
 import { availabilityText } from '@/lib/utils';
+import { friendlyListingError } from '@/lib/errors';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const MINUTES = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
 const MAX_PHOTO_MB = 5;
-
-// Turns a Supabase error into (a) a full log line for developers and (b) a safe message for the screen.
-// Customers/businesses only ever see the friendly text. The real code + message are shown only while
-// running locally (npm run dev) and are always printed to the browser console there.
-type SupabaseLikeError = { code?: string; message?: string; details?: string | null; hint?: string | null };
-
-function listingSaveError(step: string, err: SupabaseLikeError): string {
-  if (import.meta.env.DEV) {
-    console.error(`[Luck Bite] Listing save failed at step: ${step}`, {
-      code: err.code,
-      message: err.message,
-      details: err.details,
-      hint: err.hint,
-    });
-  }
-
-  let friendly = 'Could not save the listing. Please try again.';
-  if (err.code === '42501') {
-    friendly = 'Your business account is not allowed to save listings yet. Please make sure your business has been verified, then sign in again.';
-  } else if (err.code === '23514') {
-    friendly = 'Please check the prices and quantity, then try again.';
-  } else if (err.code === 'PGRST301' || err.code === 'PGRST303' || /jwt/i.test(err.message ?? '')) {
-    friendly = 'Your session has expired. Please sign in again.';
-  }
-
-  return import.meta.env.DEV
-    ? `${friendly} [dev only: ${step} \u2192 ${err.code ?? 'no code'}: ${err.message ?? 'no message'}]`
-    : friendly;
-}
 
 export function ListingFormModal({
   open,
@@ -166,11 +138,12 @@ export function ListingFormModal({
         .from('meal-photos')
         .upload(path, photoFile, { contentType: photoFile.type });
       if (uploadError) {
-        const detail = listingSaveError('photo upload (storage: meal-photos)', uploadError as SupabaseLikeError);
+        // Full details only in the browser console while developing
+        if (import.meta.env.DEV) console.error('[Luck Bite] Photo upload failed:', uploadError);
         setError(
           import.meta.env.DEV
-            ? detail
-            : 'Could not upload the photo. Please try again, or save without a photo.',
+            ? `Could not upload the photo. (${uploadError.message})`
+            : 'Could not upload the photo. Please try again, or save without a photo.'
         );
         setSaving(false);
         return;
@@ -199,7 +172,21 @@ export function ListingFormModal({
     }
 
     if (result.error) {
-      setError(listingSaveError(editing ? 'database update (listings)' : 'database insert (listings)', result.error));
+      const { code, message, details, hint } = result.error;
+      // While developing: print the real database error and show it on screen.
+      // In production people only see a short, safe message.
+      if (import.meta.env.DEV) {
+        console.error('[Luck Bite] Could not save the listing:', {
+          operation: editing ? 'update' : 'insert',
+          code,
+          message,
+          details,
+          hint,
+        });
+        setError(`Could not save the listing. [${code || 'error'}] ${message}`);
+      } else {
+        setError(friendlyListingError(result.error));
+      }
       setSaving(false);
       return;
     }
