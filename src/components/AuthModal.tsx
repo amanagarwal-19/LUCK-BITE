@@ -177,7 +177,7 @@ export default function AuthModal({
   return (
     <Modal open={isOpen} onClose={handleClose} title={getTitle()} size="sm">
       <div className="mb-4 flex items-center justify-between pb-1 border-b border-ink-900/5">
-        <span className={`badge ${role === 'business' ? 'bg-ink-900 text-white' : 'bg-orange-100 text-orange-700'}`}>
+        <span className={`badge ${role === 'business' ? 'bg-ink-900 text-cream-100' : 'bg-orange-100 text-orange-700'}`}>
           {role === 'business' ? 'Business Portal' : 'Customer Account'}
         </span>
         <span className="text-xs text-ink-500">

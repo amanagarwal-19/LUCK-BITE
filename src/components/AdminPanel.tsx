@@ -154,7 +154,7 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
         </button>
         <Logo size="sm" />
         <div className="ml-auto flex items-center gap-2">
-          <span className="badge bg-ink-900 text-white">Admin</span>
+          <span className="badge bg-ink-900 text-cream-100">Admin</span>
           {user && (
             <button onClick={() => signOut()} className="btn-ghost">Sign out</button>
           )}
@@ -233,7 +233,7 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
                   key={f}
                   onClick={() => setFilter(f)}
                   className={`badge capitalize transition-all ${
-                    filter === f ? 'bg-orange-500 text-white' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'
+                    filter === f ? 'bg-orange-500 text-cream-100' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'
                   }`}
                 >
                   {f}
@@ -367,7 +367,7 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
                   key={f}
                   onClick={() => setSupportFilter(f)}
                   className={`badge capitalize transition-all ${
-                    supportFilter === f ? 'bg-orange-500 text-white' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'
+                    supportFilter === f ? 'bg-orange-500 text-cream-100' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'
                   }`}
                 >
                   {f}

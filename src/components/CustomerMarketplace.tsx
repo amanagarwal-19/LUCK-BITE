@@ -121,7 +121,7 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
           )}
           <Logo size="sm" />
           <div className="ml-auto flex items-center gap-2">
-            <span className={`hidden sm:inline badge ${role === 'business' ? 'bg-ink-900 text-white' : 'bg-orange-100 text-orange-700'}`}>
+            <span className={`hidden sm:inline badge ${role === 'business' ? 'bg-ink-900 text-cream-100' : 'bg-orange-100 text-orange-700'}`}>
               {role === 'business' ? 'Business' : 'Customer'}
             </span>
             {user ? (
@@ -197,7 +197,7 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
           >
             <SlidersHorizontal size={18} /> Filters
             {activeFilterCount > 0 && (
-              <span className="ml-0.5 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-orange-500 px-1.5 text-[11px] font-bold text-white">
+              <span className="ml-0.5 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-orange-500 px-1.5 text-[11px] font-bold text-cream-100">
                 {activeFilterCount}
               </span>
             )}
@@ -212,7 +212,7 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setCategory('all')}
-                    className={`badge transition-all ${category === 'all' ? 'bg-orange-500 text-white' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'}`}
+                    className={`badge transition-all ${category === 'all' ? 'bg-orange-500 text-cream-100' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'}`}
                   >
                     All
                   </button>
@@ -220,7 +220,7 @@ export default function CustomerMarketplace({ onBack }: { onBack: () => void }) 
                     <button
                       key={cat}
                       onClick={() => setCategory(cat)}
-                      className={`badge transition-all ${category === cat ? 'bg-orange-500 text-white' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'}`}
+                      className={`badge transition-all ${category === cat ? 'bg-orange-500 text-cream-100' : 'bg-cream-200 text-ink-600 hover:bg-cream-100'}`}
                     >
                       {cat}
                     </button>
@@ -548,14 +548,14 @@ function TabButton({
       <span className="relative flex-shrink-0">
         {icon}
         {badge ? (
-          <span className="absolute -right-2.5 -top-1.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white sm:hidden">
+          <span className="absolute -right-2.5 -top-1.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-cream-100 sm:hidden">
             {badge}
           </span>
         ) : null}
       </span>
       <span>{children}</span>
       {badge ? (
-        <span className="hidden sm:inline-flex badge bg-orange-500 px-1.5 py-0.5 text-[10px] text-white">{badge}</span>
+        <span className="hidden sm:inline-flex badge bg-orange-500 px-1.5 py-0.5 text-[10px] text-cream-100">{badge}</span>
       ) : null}
     </button>
   );
@@ -589,7 +589,7 @@ function ListingCard({ listing, onClick }: { listing: Listing; onClick: () => vo
         {soldOut ? (
           <Badge variant="error">Sold out</Badge>
         ) : discount > 0 ? (
-          <Badge variant="green">-{discount}%</Badge>
+          <Badge variant="orange">-{discount}%</Badge>
         ) : null}
       </div>
 
@@ -834,7 +834,7 @@ function ListingDetailModal({
           <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex gap-2 flex-wrap">
               <Badge variant="orange">{listing.category}</Badge>
-              {discount > 0 && <Badge variant="green">-{discount}% off</Badge>}
+              {discount > 0 && <Badge variant="orange">-{discount}% off</Badge>}
               <Badge variant="neutral">{listing.quantity_available} available</Badge>
             </div>
           </div>
@@ -953,14 +953,14 @@ function ListingDetailModal({
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="w-10 h-10 rounded-xl border border-ink-900/10 bg-white font-bold text-ink-700 hover:bg-cream-200 transition-colors"
+                  className="w-10 h-10 rounded-xl border border-ink-900/25 bg-cream-50 font-bold text-ink-700 hover:bg-cream-200 transition-colors"
                 >
                   −
                 </button>
                 <span className="text-xl font-bold text-ink-900 w-8 text-center">{quantity}</span>
                 <button
                   onClick={() => setQuantity((q) => Math.min(listing.quantity_available, q + 1))}
-                  className="w-10 h-10 rounded-xl border border-ink-900/10 bg-white font-bold text-ink-700 hover:bg-cream-200 transition-colors"
+                  className="w-10 h-10 rounded-xl border border-ink-900/25 bg-cream-50 font-bold text-ink-700 hover:bg-cream-200 transition-colors"
                 >
                   +
                 </button>

@@ -97,13 +97,13 @@ export default function AccountPage({ onSignInClick }: { onSignInClick: () => vo
       <div className="card p-4 sm:p-6 max-w-2xl">
         {/* Profile summary */}
         <div className="flex items-center gap-4">
-          <div className={`w-14 h-14 rounded-full ${role === 'business' ? 'bg-ink-900' : 'bg-orange-500'} text-white flex items-center justify-center text-2xl font-bold flex-shrink-0`}>
+          <div className={`w-14 h-14 rounded-full ${role === 'business' ? 'bg-ink-900' : 'bg-orange-500'} text-cream-100 flex items-center justify-center text-2xl font-bold flex-shrink-0`}>
             {initial}
           </div>
           <div className="min-w-0">
             <h2 className="text-xl font-bold text-ink-900 truncate">{fullName || 'Your account'}</h2>
             <p className="text-ink-600 text-sm truncate">{email}</p>
-            <span className={`badge mt-1.5 ${role === 'business' ? 'bg-ink-900 text-white' : 'bg-orange-100 text-orange-700'}`}>
+            <span className={`badge mt-1.5 ${role === 'business' ? 'bg-ink-900 text-cream-100' : 'bg-orange-100 text-orange-700'}`}>
               {role === 'business' ? 'Business Account' : role === 'admin' ? 'Admin' : 'Customer Account'}
             </span>
           </div>

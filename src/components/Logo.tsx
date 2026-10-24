@@ -8,7 +8,7 @@ export default function Logo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   return (
     <div className="flex items-center gap-2.5">
       <div className={`${dim} rounded-xl bg-orange-500 flex items-center justify-center shadow-warm`}>
-        <UtensilsCrossed size={icon} className="text-white" strokeWidth={2.5} />
+        <UtensilsCrossed size={icon} className="text-cream-100" strokeWidth={2.5} />
       </div>
       <span className={`${text} font-display font-bold tracking-tight text-ink-900`}>
         Luck<span className="text-orange-500">Bite</span>

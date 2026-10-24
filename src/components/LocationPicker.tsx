@@ -24,11 +24,11 @@ interface SearchResult {
 
 const INDIA_CENTER: [number, number] = [22.9734, 78.6569];
 
-// A simple orange pin drawn with CSS (no image files needed)
+// A simple forest-green pin drawn with CSS (no image files needed)
 const PIN_ICON = L.divIcon({
   className: '',
   html:
-    '<div style="width:28px;height:28px;background:#f97316;border:3px solid #fff;' +
+    '<div style="width:28px;height:28px;background:#173D2A;border:3px solid #FFF8EC;' +
     'border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>',
   iconSize: [28, 28],
   iconAnchor: [14, 28],
@@ -219,7 +219,7 @@ export default function LocationPicker({
       {message && <p className="text-sm text-ink-600">{message}</p>}
 
       {results.length > 0 && (
-        <ul className="rounded-xl border border-ink-900/10 bg-white divide-y divide-ink-900/5 max-h-56 overflow-y-auto">
+        <ul className="rounded-xl border border-ink-900/10 bg-cream-50 divide-y divide-ink-900/5 max-h-56 overflow-y-auto">
           {results.map((r) => (
             <li key={r.place_id}>
               <button

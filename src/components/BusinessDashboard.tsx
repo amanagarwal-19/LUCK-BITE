@@ -93,7 +93,7 @@ export default function BusinessDashboard({
           </button>
           <Logo size="sm" />
           <div className="ml-auto flex items-center gap-2">
-            <span className="badge bg-ink-900 text-white">Business</span>
+            <span className="badge bg-ink-900 text-cream-100">Business</span>
             <button
               onClick={() => signOut()}
               className="btn-ghost text-ink-500 hover:text-ink-900"
@@ -110,7 +110,7 @@ export default function BusinessDashboard({
         <div className="card p-5 sm:p-6 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-ink-900 flex items-center justify-center flex-shrink-0">
-              <Store size={24} className="text-white" />
+              <Store size={24} className="text-cream-100" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -311,14 +311,14 @@ function TabButton({
       <span className="relative flex-shrink-0">
         {icon}
         {badge ? (
-          <span className="absolute -right-2.5 -top-1.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white sm:hidden">
+          <span className="absolute -right-2.5 -top-1.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-cream-100 sm:hidden">
             {badge}
           </span>
         ) : null}
       </span>
       <span>{children}</span>
       {badge ? (
-        <span className="hidden sm:inline-flex badge bg-orange-500 px-1.5 py-0.5 text-[10px] text-white">{badge}</span>
+        <span className="hidden sm:inline-flex badge bg-orange-500 px-1.5 py-0.5 text-[10px] text-cream-100">{badge}</span>
       ) : null}
     </button>
   );

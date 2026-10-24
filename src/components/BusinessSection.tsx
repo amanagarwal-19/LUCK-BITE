@@ -38,7 +38,7 @@ function PortalHeader({ onBack, right }: { onBack: () => void; right?: React.Rea
         )}
         <Logo size="sm" />
         <div className="ml-auto flex items-center gap-2">
-          <span className="badge bg-ink-900 text-white">Business</span>
+          <span className="badge bg-ink-900 text-cream-100">Business</span>
           {right}
         </div>
       </div>
@@ -78,7 +78,7 @@ export default function BusinessSection({ onBack }: { onBack: () => void }) {
         <div className="max-w-md mx-auto px-5 sm:px-8 py-10 sm:py-14">
           <div className="card p-6 sm:p-8 text-center">
             <div className="w-14 h-14 rounded-2xl bg-ink-900 flex items-center justify-center mx-auto mb-4 shadow-card">
-              <Store size={28} className="text-white" />
+              <Store size={28} className="text-cream-100" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-2">Business Portal</h1>
             <p className="text-ink-600 text-sm mb-6">
@@ -189,7 +189,7 @@ export default function BusinessSection({ onBack }: { onBack: () => void }) {
       <div className="max-w-2xl mx-auto px-5 sm:px-8 py-8 sm:py-10">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-ink-900 flex items-center justify-center mx-auto mb-4 shadow-card">
-            <Store size={28} className="text-white" />
+            <Store size={28} className="text-cream-100" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-ink-900 mb-2">Your Businesses</h1>
           <p className="text-ink-600 text-sm">Signed in as {user.email}</p>
@@ -199,7 +199,7 @@ export default function BusinessSection({ onBack }: { onBack: () => void }) {
           onClick={() => setShowCreate(true)}
           className="card p-5 w-full flex items-center gap-4 text-left hover:shadow-card-hover hover:border-orange-200 transition-all group mb-6"
         >
-          <div className="w-11 h-11 rounded-xl bg-orange-500 flex items-center justify-center text-white shadow-warm group-hover:scale-110 transition-transform">
+          <div className="w-11 h-11 rounded-xl bg-orange-500 flex items-center justify-center text-cream-100 shadow-warm group-hover:scale-110 transition-transform">
             <Plus size={22} />
           </div>
           <div className="flex-1">
