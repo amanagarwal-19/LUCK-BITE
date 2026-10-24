@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, Package, Clock, Tag, AlertTriangle, ImagePlus, X  } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, Package, Clock, Tag, AlertTriangle, ImagePlus, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { MEAL_CATEGORIES } from '@/types';
 import type { Listing } from '@/types';
@@ -175,85 +175,109 @@ export function ListingFormModal({
     onClose();
   };
 
+  // Live discount preview, worked out from the two prices typed in
+  const origNum = parseFloat(form.original_price);
+  const discNum = parseFloat(form.discounted_price);
+  const discountPreview =
+    origNum > 0 && discNum >= 0 && discNum <= origNum ? Math.round((1 - discNum / origNum) * 100) : null;
+
   return (
     <Modal open={open} onClose={onClose} title={editing ? 'Edit Listing' : 'Add New Listing'} size="lg">
-      <div className="space-y-4">
-        <div className="grid sm:grid-cols-2 gap-4">
+      <div className="space-y-6">
+        {/* Basic details */}
+        <section className="space-y-4">
+          <h3 className="text-sm font-bold text-ink-900">Food details</h3>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="label-field">Item / Meal Name *</label>
+              <input
+                type="text"
+                value={form.meal_name}
+                onChange={(e) => update('meal_name', e.target.value)}
+                placeholder="Paneer Butter Masala"
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="label-field">Category</label>
+              <select
+                value={form.category}
+                onChange={(e) => update('category', e.target.value)}
+                className="input-field"
+              >
+                {MEAL_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div>
-            <label className="label-field">Item / Meal Name *</label>
-            <input
-              type="text"
-              value={form.meal_name}
-              onChange={(e) => update('meal_name', e.target.value)}
-              placeholder="Paneer Butter Masala"
-              className="input-field"
+            <label className="label-field">Description *</label>
+            <textarea
+              value={form.description}
+              onChange={(e) => update('description', e.target.value)}
+              placeholder="Describe your food: what it is, how it tastes, serving size…"
+              rows={3}
+              className="input-field resize-none"
             />
           </div>
-          <div>
-            <label className="label-field">Category</label>
-            <select
-              value={form.category}
-              onChange={(e) => update('category', e.target.value)}
-              className="input-field"
-            >
-              {MEAL_CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        </section>
 
-        <div>
-          <label className="label-field">Description *</label>
-          <textarea
-            value={form.description}
-            onChange={(e) => update('description', e.target.value)}
-            placeholder="Describe your food: what it is, how it tastes, serving size…"
-            rows={3}
-            className="input-field resize-none"
-          />
-        </div>
+        {/* Pricing and stock */}
+        <section className="space-y-4 pt-6 border-t border-ink-900/5">
+          <h3 className="text-sm font-bold text-ink-900">Price &amp; quantity</h3>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div>
+              <label className="label-field">Quantity Available *</label>
+              <input
+                type="number"
+                min="0"
+                value={form.quantity_available}
+                onChange={(e) => update('quantity_available', e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="label-field">Original Price *</label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-medium text-ink-400">₹</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.50"
+                  value={form.original_price}
+                  onChange={(e) => update('original_price', e.target.value)}
+                  placeholder="300"
+                  className="input-field pl-8"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="label-field">Discounted Price *</label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-medium text-ink-400">₹</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.50"
+                  value={form.discounted_price}
+                  onChange={(e) => update('discounted_price', e.target.value)}
+                  placeholder="150"
+                  className="input-field pl-8"
+                />
+              </div>
+            </div>
+          </div>
+          {discountPreview !== null && discountPreview > 0 && (
+            <p className="text-sm text-green-600 font-medium">Customers will see {discountPreview}% off.</p>
+          )}
+        </section>
 
-        <div className="grid sm:grid-cols-3 gap-4">
-          <div>
-            <label className="label-field">Quantity Available *</label>
-            <input
-              type="number"
-              min="0"
-              value={form.quantity_available}
-              onChange={(e) => update('quantity_available', e.target.value)}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="label-field">Original Price (₹) *</label>
-            <input
-              type="number"
-              min="0"
-              step="0.50"
-              value={form.original_price}
-              onChange={(e) => update('original_price', e.target.value)}
-              placeholder="300"
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="label-field">Discounted Price (₹) *</label>
-            <input
-              type="number"
-              min="0"
-              step="0.50"
-              value={form.discounted_price}
-              onChange={(e) => update('discounted_price', e.target.value)}
-              placeholder="150"
-              className="input-field"
-            />
-          </div>
-        </div>
-
-                <div>
+        {/* Pickup time */}
+        <section className="pt-6 border-t border-ink-900/5">
+          <h3 className="text-sm font-bold text-ink-900 mb-4">Pickup time</h3>
           <label className="label-field">Available till (24-hour time) *</label>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 max-w-sm">
             <select
               value={form.available_hour}
               onChange={(e) => update('available_hour', e.target.value)}
@@ -278,57 +302,65 @@ export function ListingFormModal({
               ))}
             </select>
           </div>
-          <p className="text-xs text-ink-400 mt-1">Customers can collect until this time. Example: 18:30</p>
-        </div>
+          <p className="text-xs text-ink-400 mt-1.5">Customers can collect until this time. Example: 18:30</p>
+        </section>
 
-        <div>
-          <label className="label-field">Item Photo (optional)</label>
-          {photoPreview || existingPhotoUrl ? (
-            <div className="relative w-full sm:w-64">
-              <img
-                src={photoPreview ?? existingPhotoUrl ?? ''}
-                alt="Item preview"
-                className="w-full h-40 object-cover rounded-xl border border-ink-900/10"
-              />
+        {/* Photo and food safety */}
+        <section className="space-y-4 pt-6 border-t border-ink-900/5">
+          <h3 className="text-sm font-bold text-ink-900">Photo &amp; food information</h3>
+          <div>
+            <label className="label-field">
+              Item Photo <span className="text-ink-400 font-normal">(optional)</span>
+            </label>
+            {photoPreview || existingPhotoUrl ? (
+              <div className="relative w-full sm:w-64">
+                <img
+                  src={photoPreview ?? existingPhotoUrl ?? ''}
+                  alt="Item preview"
+                  className="w-full h-40 object-cover rounded-xl border border-ink-900/10"
+                />
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  className="absolute top-2 right-2 bg-white/90 rounded-full p-2 shadow-card hover:bg-white"
+                  aria-label="Remove photo"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={removePhoto}
-                className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 shadow-card hover:bg-white"
-                aria-label="Remove photo"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full rounded-xl border-2 border-dashed border-ink-900/15 py-6 flex flex-col items-center gap-1 text-ink-500 hover:border-orange-300 hover:text-orange-600 transition-colors"
               >
-                <X size={16} />
+                <ImagePlus size={24} />
+                <span className="text-sm font-medium">Click to add a photo</span>
+                <span className="text-xs text-ink-400">JPG, PNG or WebP, up to 5 MB</span>
               </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full rounded-xl border-2 border-dashed border-ink-900/15 py-6 flex flex-col items-center gap-1 text-ink-500 hover:border-orange-300 hover:text-orange-600 transition-colors"
-            >
-              <ImagePlus size={24} />
-              <span className="text-sm font-medium">Click to add a photo</span>
-              <span className="text-xs text-ink-400">JPG, PNG or WebP, up to 5 MB</span>
-            </button>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handlePhotoChange}
-            className="hidden"
-          />
-        </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePhotoChange}
+              className="hidden"
+            />
+          </div>
 
-        <div>
-          <label className="label-field">Allergen & Storage Info</label>
-          <textarea
-            value={form.allergen_info}
-            onChange={(e) => update('allergen_info', e.target.value)}
-            placeholder="Contains wheat, dairy. Keep refrigerated."
-            rows={2}
-            className="input-field resize-none"
-          />
-        </div>
+          <div>
+            <label className="label-field">
+              Allergen &amp; Storage Info <span className="text-ink-400 font-normal">(recommended)</span>
+            </label>
+            <textarea
+              value={form.allergen_info}
+              onChange={(e) => update('allergen_info', e.target.value)}
+              placeholder="Contains wheat, dairy. Keep refrigerated."
+              rows={2}
+              className="input-field resize-none"
+            />
+          </div>
+        </section>
 
         {error && (
           <div className="rounded-xl bg-error-100 border border-error-500/20 p-3">
@@ -336,15 +368,17 @@ export function ListingFormModal({
           </div>
         )}
 
-        <div className="flex gap-3 pt-2">
-          <button onClick={onClose} className="btn-secondary flex-1">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="btn-primary flex-1">
-            {saving ? 'Saving…' : editing ? 'Update Listing' : 'Publish Listing'}
-          </button>
+        <div>
+          <div className="flex flex-col-reverse sm:flex-row gap-3">
+            <button onClick={onClose} className="btn-secondary sm:flex-1">Cancel</button>
+            <button onClick={handleSave} disabled={saving} className="btn-primary sm:flex-1">
+              {saving ? 'Saving…' : editing ? 'Update Listing' : 'Publish Listing'}
+            </button>
+          </div>
+          <p className="text-center text-xs text-ink-400 mt-3">
+            Published listings appear in Discover Food for customers automatically.
+          </p>
         </div>
-        <p className="text-center text-xs text-ink-400">
-          Published listings appear in Discover Food for customers automatically.
-        </p>
       </div>
     </Modal>
   );
@@ -364,10 +398,11 @@ export function ListingCard({
   const discount = listing.original_price > 0
     ? Math.round((1 - listing.discounted_price / listing.original_price) * 100)
     : 0;
+  const hasOriginalPrice = listing.original_price > listing.discounted_price;
 
   return (
-    <div className={`card p-5 ${!listing.is_active ? 'opacity-60' : ''}`}>
-            {listing.photo_url && (
+    <div className={`card flex h-full flex-col p-4 sm:p-5 ${!listing.is_active ? 'opacity-60' : ''}`}>
+      {listing.photo_url && (
         <img
           src={listing.photo_url}
           alt={listing.meal_name}
@@ -375,44 +410,48 @@ export function ListingCard({
           className="w-full h-40 object-cover rounded-xl mb-4"
         />
       )}
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex gap-2 flex-wrap">
-          <Badge variant="orange">{listing.category}</Badge>
-          {discount > 0 && <Badge variant="green">-{discount}%</Badge>}
-          {listing.quantity_available <= 0 && <Badge variant="error">Sold out</Badge>}
-          {!listing.is_active && <Badge variant="neutral">Hidden</Badge>}
-        </div>
+      <div className="flex gap-2 flex-wrap mb-3">
+        <Badge variant="orange">{listing.category}</Badge>
+        {discount > 0 && <Badge variant="green">-{discount}%</Badge>}
+        {listing.quantity_available <= 0 && <Badge variant="error">Sold out</Badge>}
+        {!listing.is_active && <Badge variant="neutral">Hidden</Badge>}
       </div>
 
-      <h3 className="font-bold text-lg text-ink-900 mb-1">{listing.meal_name}</h3>
+      <h3 className="font-bold text-lg leading-snug text-ink-900 mb-1 break-words">{listing.meal_name}</h3>
       <p className="text-sm text-ink-600 leading-relaxed mb-3 line-clamp-2">{listing.description}</p>
 
       <div className="space-y-1.5 text-sm text-ink-500 mb-4">
         <div className="flex items-center gap-2">
-          <Package size={15} className="text-ink-400" /> {listing.quantity_available} item{listing.quantity_available !== 1 ? 's' : ''} available
+          <Package size={15} className="text-ink-400 flex-shrink-0" />
+          {listing.quantity_available} item{listing.quantity_available !== 1 ? 's' : ''} available
         </div>
         <div className="flex items-center gap-2">
-          <Tag size={15} className="text-ink-400" /> ₹{listing.discounted_price.toFixed(2)} (was ₹{listing.original_price.toFixed(2)})
+          <Tag size={15} className="text-ink-400 flex-shrink-0" />
+          <span>
+            <span className="font-semibold text-ink-800">₹{listing.discounted_price.toFixed(2)}</span>
+            {hasOriginalPrice && <span className="text-ink-400"> (was ₹{listing.original_price.toFixed(2)})</span>}
+          </span>
         </div>
-        <div className="flex items-center gap-2">
-         {availabilityText(listing)}
+        <div className="flex items-start gap-2">
+          <Clock size={15} className="text-ink-400 flex-shrink-0 mt-0.5" />
+          <span>{availabilityText(listing)}</span>
         </div>
         {listing.allergen_info && (
           <div className="flex items-start gap-2">
-            <AlertTriangle size={15} className="text-warning-500 mt-0.5" />
+            <AlertTriangle size={15} className="text-warning-500 flex-shrink-0 mt-0.5" />
             <span className="line-clamp-1">{listing.allergen_info}</span>
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-2 pt-3 border-t border-ink-900/5">
-        <button onClick={onEdit} className="btn-ghost text-sm">
+      <div className="mt-auto flex items-center gap-1 pt-3 border-t border-ink-900/5">
+        <button onClick={onEdit} className="btn-ghost text-sm min-h-[40px]">
           <Pencil size={15} /> Edit
         </button>
-        <button onClick={onToggle} className="btn-ghost text-sm">
+        <button onClick={onToggle} className="btn-ghost text-sm min-h-[40px]">
           {listing.is_active ? <><EyeOff size={15} /> Hide</> : <><Eye size={15} /> Show</>}
         </button>
-        <button onClick={onDelete} className="btn-ghost text-sm text-error-700 hover:bg-error-100 ml-auto">
+        <button onClick={onDelete} className="btn-ghost text-sm min-h-[40px] text-error-700 hover:bg-error-100 ml-auto">
           <Trash2 size={15} /> Delete
         </button>
       </div>

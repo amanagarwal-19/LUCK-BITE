@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Modal from '@/components/Modal';
 import LocationPicker from '@/components/LocationPicker';
 import type { PickedLocation } from '@/components/LocationPicker';
-import { ArrowLeft, Plus, Package, ClipboardList, Store, MapPin, Mail, Phone, Clock, Tag, LogOut, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Plus, Package, ClipboardList, Store, MapPin, Mail, Phone, Clock, Tag, LogOut, BarChart3, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useBusinessListings, useBusinessReservations } from '@/hooks/useData';
 import { useAuth } from '@/lib/AuthContext';
@@ -86,8 +86,11 @@ export default function BusinessDashboard({
             <div className="w-12 h-12 rounded-xl bg-ink-900 flex items-center justify-center flex-shrink-0">
               <Store size={24} className="text-white" />
             </div>
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-ink-900">{business.name}</h1>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl font-bold text-ink-900 break-words">{business.name}</h1>
+                <Badge variant="green"><ShieldCheck size={13} /> Verified</Badge>
+              </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-500 mt-1">
                 <span className="flex items-center gap-1.5"><Tag size={14} /> {business.business_type}</span>
                 <span className="flex items-center gap-1.5"><MapPin size={14} /> {business.location}</span>
@@ -122,25 +125,27 @@ export default function BusinessDashboard({
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 border-b border-ink-900/5">
-          <TabButton active={tab === 'listings'} onClick={() => setTab('listings')} icon={<Package size={17} />}>
+        <div className="flex items-stretch mb-6 border-b border-ink-900/5">
+          <TabButton active={tab === 'listings'} onClick={() => setTab('listings')} icon={<Package size={18} />}>
             Listings
           </TabButton>
-          <TabButton active={tab === 'reservations'} onClick={() => setTab('reservations')} icon={<ClipboardList size={17} />}>
+          <TabButton
+            active={tab === 'reservations'}
+            onClick={() => setTab('reservations')}
+            icon={<ClipboardList size={18} />}
+            badge={pendingReservations}
+          >
             Reservations
-            {pendingReservations > 0 && (
-              <span className="ml-1.5 badge bg-orange-500 text-white px-1.5 py-0.5 text-[10px]">{pendingReservations}</span>
-            )}
           </TabButton>
-          <TabButton active={tab === 'analytics'} onClick={() => setTab('analytics')} icon={<BarChart3 size={17} />}>
-            Impact & Performance
+          <TabButton active={tab === 'analytics'} onClick={() => setTab('analytics')} icon={<BarChart3 size={18} />}>
+            Impact<span className="hidden sm:inline"> &amp; Performance</span>
           </TabButton>
         </div>
 
         {/* Tab content */}
         {tab === 'listings' && (
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between gap-3 mb-4">
               <h2 className="text-xl font-bold text-ink-900">Food Listings</h2>
               <button onClick={openAdd} className="btn-primary">
                 <Plus size={18} /> Add Listing
@@ -217,24 +222,37 @@ function TabButton({
   active,
   onClick,
   icon,
+  badge,
   children,
 }: {
   active: boolean;
   onClick: () => void;
   icon: React.ReactNode;
+  badge?: number;
   children: React.ReactNode;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border-b-2 transition-colors -mb-px ${
+      aria-current={active ? 'page' : undefined}
+      className={`flex min-h-[54px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 border-b-2 -mb-px px-1.5 py-2 text-center text-[12px] font-semibold leading-tight transition-colors sm:flex-none sm:flex-row sm:gap-2 sm:px-4 sm:py-3 sm:text-sm sm:leading-normal ${
         active
           ? 'border-orange-500 text-orange-600'
           : 'border-transparent text-ink-500 hover:text-ink-900'
       }`}
     >
-      {icon}
-      {children}
+      <span className="relative flex-shrink-0">
+        {icon}
+        {badge ? (
+          <span className="absolute -right-2.5 -top-1.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white sm:hidden">
+            {badge}
+          </span>
+        ) : null}
+      </span>
+      <span>{children}</span>
+      {badge ? (
+        <span className="hidden sm:inline-flex badge bg-orange-500 px-1.5 py-0.5 text-[10px] text-white">{badge}</span>
+      ) : null}
     </button>
   );
 }

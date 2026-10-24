@@ -18,7 +18,7 @@ export default function LandingPage({
 
         <div className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-10 pb-16 sm:pt-16 sm:pb-24">
           {/* Nav */}
-          <nav className="flex items-center justify-between mb-16 sm:mb-24">
+          <nav className="flex items-center justify-between mb-10 sm:mb-16">
             <Logo size="lg" />
           </nav>
 
@@ -42,7 +42,7 @@ export default function LandingPage({
           <div className="grid sm:grid-cols-2 gap-5 max-w-2xl mx-auto mt-2">
             <button
               onClick={onSelectCustomer}
-              className="group card p-7 text-left hover:shadow-card-hover hover:border-orange-200 transition-all duration-300 animate-slide-up"
+              className="group card flex h-full flex-col p-6 sm:p-7 text-left hover:shadow-card-hover hover:border-orange-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 transition-all duration-300 animate-slide-up"
             >
               <div className="w-14 h-14 rounded-2xl bg-orange-500 flex items-center justify-center mb-5 shadow-warm group-hover:scale-110 transition-transform">
                 <ShoppingBag size={28} className="text-white" strokeWidth={2.2} />
@@ -51,14 +51,14 @@ export default function LandingPage({
               <p className="text-ink-600 text-sm leading-relaxed mb-4">
                 Browse affordable meals from local businesses and reserve yours for pickup.
               </p>
-              <span className="inline-flex items-center gap-1.5 text-orange-600 font-semibold text-sm group-hover:gap-2.5 transition-all">
+              <span className="mt-auto inline-flex items-center gap-1.5 text-orange-600 font-semibold text-sm group-hover:gap-2.5 transition-all">
                 Discover food <ArrowRight size={16} />
               </span>
             </button>
 
             <button
               onClick={onSelectBusiness}
-              className="group card p-7 text-left hover:shadow-card-hover hover:border-orange-200 transition-all duration-300 animate-slide-up"
+              className="group card flex h-full flex-col p-6 sm:p-7 text-left hover:shadow-card-hover hover:border-orange-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 transition-all duration-300 animate-slide-up"
             >
               <div className="w-14 h-14 rounded-2xl bg-ink-900 flex items-center justify-center mb-5 shadow-card group-hover:scale-110 transition-transform">
                 <Store size={28} className="text-white" strokeWidth={2.2} />
@@ -67,7 +67,7 @@ export default function LandingPage({
               <p className="text-ink-600 text-sm leading-relaxed mb-4">
                 List your surplus food, manage reservations, and track pickups from one dashboard.
               </p>
-              <span className="inline-flex items-center gap-1.5 text-orange-600 font-semibold text-sm group-hover:gap-2.5 transition-all">
+              <span className="mt-auto inline-flex items-center gap-1.5 text-orange-600 font-semibold text-sm group-hover:gap-2.5 transition-all">
                 Go to dashboard <ArrowRight size={16} />
               </span>
             </button>
@@ -76,7 +76,8 @@ export default function LandingPage({
       </div>
 
       {/* How it works */}
-      <div className="max-w-6xl mx-auto px-5 sm:px-8 pb-20">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 pb-16 sm:pb-20">
+        <h2 className="text-center text-2xl font-bold text-ink-900 mb-8">Why Luck Bite</h2>
         <div className="grid sm:grid-cols-3 gap-5">
           <div className="card p-6">
             <div className="w-11 h-11 rounded-xl bg-orange-100 flex items-center justify-center mb-4">
@@ -111,7 +112,7 @@ export default function LandingPage({
       <footer className="border-t border-ink-900/5 py-8">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Logo size="sm" />
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
             <p className="text-sm text-ink-500">
               Demo prototype for Eureka Junior — no real payments or SMS verification.
             </p>
