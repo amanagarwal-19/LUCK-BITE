@@ -11,6 +11,35 @@ const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const MINUTES = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
 const MAX_PHOTO_MB = 5;
 
+// Turns a Supabase error into (a) a full log line for developers and (b) a safe message for the screen.
+// Customers/businesses only ever see the friendly text. The real code + message are shown only while
+// running locally (npm run dev) and are always printed to the browser console there.
+type SupabaseLikeError = { code?: string; message?: string; details?: string | null; hint?: string | null };
+
+function listingSaveError(step: string, err: SupabaseLikeError): string {
+  if (import.meta.env.DEV) {
+    console.error(`[Luck Bite] Listing save failed at step: ${step}`, {
+      code: err.code,
+      message: err.message,
+      details: err.details,
+      hint: err.hint,
+    });
+  }
+
+  let friendly = 'Could not save the listing. Please try again.';
+  if (err.code === '42501') {
+    friendly = 'Your business account is not allowed to save listings yet. Please make sure your business has been verified, then sign in again.';
+  } else if (err.code === '23514') {
+    friendly = 'Please check the prices and quantity, then try again.';
+  } else if (err.code === 'PGRST301' || err.code === 'PGRST303' || /jwt/i.test(err.message ?? '')) {
+    friendly = 'Your session has expired. Please sign in again.';
+  }
+
+  return import.meta.env.DEV
+    ? `${friendly} [dev only: ${step} \u2192 ${err.code ?? 'no code'}: ${err.message ?? 'no message'}]`
+    : friendly;
+}
+
 export function ListingFormModal({
   open,
   onClose,
@@ -137,7 +166,12 @@ export function ListingFormModal({
         .from('meal-photos')
         .upload(path, photoFile, { contentType: photoFile.type });
       if (uploadError) {
-        setError('Could not upload the photo. Please try again, or save without a photo.');
+        const detail = listingSaveError('photo upload (storage: meal-photos)', uploadError as SupabaseLikeError);
+        setError(
+          import.meta.env.DEV
+            ? detail
+            : 'Could not upload the photo. Please try again, or save without a photo.',
+        );
         setSaving(false);
         return;
       }
@@ -165,7 +199,7 @@ export function ListingFormModal({
     }
 
     if (result.error) {
-      setError('Could not save the listing. Please try again.');
+      setError(listingSaveError(editing ? 'database update (listings)' : 'database insert (listings)', result.error));
       setSaving(false);
       return;
     }
